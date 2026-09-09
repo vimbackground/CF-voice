@@ -1,4 +1,5 @@
 const TOKEN_REFRESH_BEFORE_EXPIRY = 3 * 60;
+const AUTH_COOKIE_NAME = 'voicecraft_access';
 let tokenInfo = {
     endpoint: null,
     token: null,
@@ -12,7 +13,7 @@ const HTML_PAGE = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="page.title">VoiceCraft - AI-Powered Voice Processing Platform</title>
+    <title data-i18n="page.title">CF-voice - AI-Powered Voice Processing Platform</title>
     <meta name="description" content="" data-i18n-content="page.description">
     <meta name="keywords" content="" data-i18n-content="page.keywords">
     <style>
@@ -53,7 +54,7 @@ const HTML_PAGE = `
         }
         
         .container {
-            max-width: 900px;
+            max-width: 1080px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -62,14 +63,14 @@ const HTML_PAGE = `
             background: var(--surface-color);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
-            padding: 40px 30px;
+            padding: 22px 28px;
             text-align: center;
             margin-bottom: 30px;
             border: 1px solid var(--border-color);
         }
         
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             color: var(--primary-color);
             margin-bottom: 12px;
@@ -115,11 +116,11 @@ const HTML_PAGE = `
         }
         
         .form-container {
-            padding: 40px;
+            padding: 26px;
         }
         
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
         
         .form-label {
@@ -156,9 +157,16 @@ const HTML_PAGE = `
         .controls-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
+            gap: 12px;
+            margin-bottom: 18px;
         }
+
+        .utility-row { display: flex; gap: 10px; align-items: center; margin: -4px 0 16px; }
+        .btn-outline { background: #fff; color: var(--primary-color); border: 1px solid var(--border-focus); padding: 9px 13px; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
+        .settings-panel { background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px; }
+        .settings-panel summary { cursor: pointer; font-weight: 700; color: var(--text-primary); }
+        .settings-panel .controls-grid { margin: 14px 0 0; }
+        .settings-help { color: var(--text-secondary); font-size: .78rem; margin-top: 6px; }
         
         .btn-primary {
             width: 100%;
@@ -941,7 +949,7 @@ const HTML_PAGE = `
 
     <div class="container">
         <div class="header">
-            <h1 data-i18n="header.title">VoiceCraft</h1>
+            <h1 data-i18n="header.title">CF-voice</h1>
             <p class="subtitle" data-i18n="header.subtitle">AI-Powered Voice Processing Platform</p>
             <div class="features">
                 <div class="feature-item">
@@ -1116,6 +1124,20 @@ const HTML_PAGE = `
                             </select>
                         </div>
                     </div>
+
+                    <div class="utility-row">
+                        <button type="button" class="btn-outline" id="previewVoiceBtn">▶ 试听当前音色</button>
+                        <span class="settings-help" id="previewStatus">使用固定示例，不会影响当前文本</span>
+                    </div>
+
+                    <details class="settings-panel" id="openTtsSettings">
+                        <summary>OpenTTS / OpenAI 兼容设置</summary>
+                        <p class="settings-help">接口地址：<code>/v1/audio/speech</code>。支持 OpenAI 的 input、model、voice、response_format、speed；扩展参数为 pitch、volume、style。</p>
+                        <div class="controls-grid">
+                            <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
+                            <div class="form-group"><label class="form-label" for="responseFormat">输出格式</label><select class="form-select" id="responseFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="opus">Opus</option><option value="pcm">PCM</option></select></div>
+                        </div>
+                    </details>
                     
                     <button type="submit" class="btn-primary" id="generateBtn">
                         <span>🎙️</span>
@@ -1173,25 +1195,16 @@ const HTML_PAGE = `
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="tokenInput">API Token配置</label>
-                        <div class="token-config">
-                            <div class="token-option">
-                                <label class="token-label">
-                                    <input type="radio" name="tokenOption" value="default" checked>
-                                    <span>使用默认Token</span>
-                                </label>
-                            </div>
-                            <div class="token-option">
-                                <label class="token-label">
-                                    <input type="radio" name="tokenOption" value="custom">
-                                    <span>使用硅基流动自定义Token</span>
-                                </label>
-                            </div>
+                    <details class="settings-panel" open>
+                        <summary>STT 服务设置</summary>
+                        <div class="controls-grid">
+                            <div class="form-group"><label class="form-label" for="sttProvider">服务商</label><select class="form-select" id="sttProvider"><option value="siliconflow">硅基流动</option><option value="openai-compatible">任意 OpenAI 兼容服务</option></select></div>
+                            <div class="form-group"><label class="form-label" for="sttModel">模型</label><input class="form-input" id="sttModel" value="FunAudioLLM/SenseVoiceSmall" placeholder="whisper-1 / 模型 ID"></div>
+                            <div class="form-group stt-custom-field" style="display:none"><label class="form-label" for="sttBaseUrl">兼容服务 Base URL</label><input class="form-input" id="sttBaseUrl" placeholder="https://api.example.com/v1"></div>
+                            <div class="form-group"><label class="form-label" for="tokenInput">API Key（仅本次请求使用）</label><input type="password" class="form-input" id="tokenInput" placeholder="可选：部署者配置默认密钥时可留空"></div>
                         </div>
-                        <input type="password" class="form-input" id="tokenInput" 
-                               placeholder="输入您的API Token（可选）" style="display: none;">
-                    </div>
+                        <p class="settings-help">兼容服务将接收标准 multipart 字段：file、model、language、prompt、response_format。</p>
+                    </details>
 
                     <button type="submit" class="btn-primary" id="transcribeBtn">
                         <span>🎧</span>
@@ -1268,8 +1281,8 @@ const HTML_PAGE = `
         // 国际化翻译数据
         const translations = {
             en: {
-                'page.title': 'VoiceCraft - AI-Powered Voice Processing Platform',
-                'page.description': 'VoiceCraft is an AI-powered platform that converts text to speech and speech to text with 20+ voice options, lightning fast processing, completely free to use.',
+                'page.title': 'CF-voice - AI-Powered Voice Processing Platform',
+                'page.description': 'CF-voice is an AI-powered platform that converts text to speech and speech to text with 20+ voice options, lightning fast processing, completely free to use.',
                 'page.keywords': 'text to speech,AI voice synthesis,online TTS,voice generator,free voice tools,speech to text,voice transcription',
                 'lang.current': 'English',
                 'lang.en': 'English',
@@ -1280,7 +1293,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'AI-Powered Voice Processing Platform',
                 'header.feature1': '20+ Voice Options',
                 'header.feature2': 'Lightning Fast',
@@ -1290,8 +1303,8 @@ const HTML_PAGE = `
                 'mode.transcription': 'Speech to Text'
             },
             zh: {
-                'page.title': 'VoiceCraft - AI驱动的语音处理平台',
-                'page.description': 'VoiceCraft是一个AI驱动的平台，支持文字转语音和语音转文字，拥有20+种语音选项，闪电般的处理速度，完全免费使用。',
+                'page.title': 'CF-voice - AI驱动的语音处理平台',
+                'page.description': 'CF-voice是一个AI驱动的平台，支持文字转语音和语音转文字，拥有20+种语音选项，闪电般的处理速度，完全免费使用。',
                 'page.keywords': '文字转语音,AI语音合成,在线TTS,语音生成器,免费语音工具,语音转文字,语音转录',
                 'lang.current': '中文',
                 'lang.en': 'English',
@@ -1302,7 +1315,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'AI驱动的语音处理平台',
                 'header.feature1': '20+种语音选项',
                 'header.feature2': '闪电般快速',
@@ -1312,8 +1325,8 @@ const HTML_PAGE = `
                 'mode.transcription': '语音转文字'
             },
             ja: {
-                'page.title': 'VoiceCraft - AI音声処理プラットフォーム',
-                'page.description': 'VoiceCraftはAI駆動のプラットフォームで、テキスト読み上げと音声テキスト変換に対応。20以上の音声オプション、高速処理、完全無料でご利用いただけます。',
+                'page.title': 'CF-voice - AI音声処理プラットフォーム',
+                'page.description': 'CF-voiceはAI駆動のプラットフォームで、テキスト読み上げと音声テキスト変換に対応。20以上の音声オプション、高速処理、完全無料でご利用いただけます。',
                 'page.keywords': 'テキスト読み上げ,AI音声合成,オンラインTTS,音声ジェネレーター,無料音声ツール,音声テキスト変換,音声転写',
                 'lang.current': '日本語',
                 'lang.en': 'English',
@@ -1324,7 +1337,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'AI音声処理プラットフォーム',
                 'header.feature1': '20以上の音声オプション',
                 'header.feature2': '高速処理',
@@ -1334,8 +1347,8 @@ const HTML_PAGE = `
                 'mode.transcription': '音声テキスト変換'
             },
             ko: {
-                'page.title': 'VoiceCraft - AI 음성 처리 플랫폼',
-                'page.description': 'VoiceCraft는 AI 기반 플랫폼으로 텍스트 음성 변환과 음성 텍스트 변환을 지원합니다. 20개 이상의 음성 옵션, 빠른 처리 속도, 완전 무료로 이용하실 수 있습니다.',
+                'page.title': 'CF-voice - AI 음성 처리 플랫폼',
+                'page.description': 'CF-voice는 AI 기반 플랫폼으로 텍스트 음성 변환과 음성 텍스트 변환을 지원합니다. 20개 이상의 음성 옵션, 빠른 처리 속도, 완전 무료로 이용하실 수 있습니다.',
                 'page.keywords': '텍스트 음성 변환,AI 음성 합성,온라인 TTS,음성 생성기,무료 음성 도구,음성 텍스트 변환,음성 전사',
                 'lang.current': '한국어',
                 'lang.en': 'English',
@@ -1346,7 +1359,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'AI 음성 처리 플랫폼',
                 'header.feature1': '20개 이상의 음성 옵션',
                 'header.feature2': '빠른 처리',
@@ -1356,8 +1369,8 @@ const HTML_PAGE = `
                 'mode.transcription': '음성 텍스트 변환'
             },
             es: {
-                'page.title': 'VoiceCraft - Plataforma de Procesamiento de Voz con IA',
-                'page.description': 'VoiceCraft es una plataforma impulsada por IA que convierte texto a voz y voz a texto con más de 20 opciones de voz, procesamiento ultrarrápido, completamente gratis.',
+                'page.title': 'CF-voice - Plataforma de Procesamiento de Voz con IA',
+                'page.description': 'CF-voice es una plataforma impulsada por IA que convierte texto a voz y voz a texto con más de 20 opciones de voz, procesamiento ultrarrápido, completamente gratis.',
                 'page.keywords': 'texto a voz,síntesis de voz IA,TTS en línea,generador de voz,herramientas de voz gratis,voz a texto,transcripción de voz',
                 'lang.current': 'Español',
                 'lang.en': 'English',
@@ -1368,7 +1381,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'Plataforma de Procesamiento de Voz con IA',
                 'header.feature1': 'Más de 20 Opciones de Voz',
                 'header.feature2': 'Ultrarrápido',
@@ -1378,8 +1391,8 @@ const HTML_PAGE = `
                 'mode.transcription': 'Voz a Texto'
             },
             fr: {
-                'page.title': 'VoiceCraft - Plateforme de Traitement Vocal IA',
-                'page.description': 'VoiceCraft est une plateforme alimentée par IA qui convertit le texte en parole et la parole en texte avec plus de 20 options vocales, traitement ultra-rapide, entièrement gratuit.',
+                'page.title': 'CF-voice - Plateforme de Traitement Vocal IA',
+                'page.description': 'CF-voice est une plateforme alimentée par IA qui convertit le texte en parole et la parole en texte avec plus de 20 options vocales, traitement ultra-rapide, entièrement gratuit.',
                 'page.keywords': 'texte vers parole,synthèse vocale IA,TTS en ligne,générateur vocal,outils vocaux gratuits,parole vers texte,transcription vocale',
                 'lang.current': 'Français',
                 'lang.en': 'English',
@@ -1390,7 +1403,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'Plateforme de Traitement Vocal IA',
                 'header.feature1': 'Plus de 20 Options Vocales',
                 'header.feature2': 'Ultra-rapide',
@@ -1400,8 +1413,8 @@ const HTML_PAGE = `
                 'mode.transcription': 'Parole vers Texte'
             },
             de: {
-                'page.title': 'VoiceCraft - KI-gestützte Sprachverarbeitungsplattform',
-                'page.description': 'VoiceCraft ist eine KI-gestützte Plattform, die Text in Sprache und Sprache in Text umwandelt, mit über 20 Sprachoptionen, blitzschneller Verarbeitung, völlig kostenlos.',
+                'page.title': 'CF-voice - KI-gestützte Sprachverarbeitungsplattform',
+                'page.description': 'CF-voice ist eine KI-gestützte Sprachverarbeitungsplattform, die Text in Sprache und Sprache in Text umwandelt, mit über 20 Sprachoptionen, blitzschneller Verarbeitung, völlig kostenlos.',
                 'page.keywords': 'Text zu Sprache,KI-Sprachsynthese,Online-TTS,Sprachgenerator,kostenlose Sprachtools,Sprache zu Text,Sprachtranskription',
                 'lang.current': 'Deutsch',
                 'lang.en': 'English',
@@ -1412,7 +1425,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'KI-gestützte Sprachverarbeitungsplattform',
                 'header.feature1': 'Über 20 Sprachoptionen',
                 'header.feature2': 'Blitzschnell',
@@ -1422,8 +1435,8 @@ const HTML_PAGE = `
                 'mode.transcription': 'Sprache zu Text'
             },
             ru: {
-                'page.title': 'VoiceCraft - ИИ-платформа обработки голоса',
-                'page.description': 'VoiceCraft - это платформа на базе ИИ, которая преобразует текст в речь и речь в текст с более чем 20 голосовыми опциями, молниеносной обработкой, совершенно бесплатно.',
+                'page.title': 'CF-voice - ИИ-платформа обработки голоса',
+                'page.description': 'CF-voice - это платформа на базе ИИ, которая преобразует текст в речь и речь в текст с более чем 20 голосовыми опциями, молниеносной обработкой, совершенно бесплатно.',
                 'page.keywords': 'текст в речь,ИИ синтез речи,онлайн TTS,генератор голоса,бесплатные голосовые инструменты,речь в текст,транскрипция речи',
                 'lang.current': 'Русский',
                 'lang.en': 'English',
@@ -1434,7 +1447,7 @@ const HTML_PAGE = `
                 'lang.fr': 'Français',
                 'lang.de': 'Deutsch',
                 'lang.ru': 'Русский',
-                'header.title': 'VoiceCraft',
+                'header.title': 'CF-voice',
                 'header.subtitle': 'ИИ-платформа обработки голоса',
                 'header.feature1': 'Более 20 голосовых опций',
                 'header.feature2': 'Молниеносно',
@@ -1535,7 +1548,9 @@ const HTML_PAGE = `
             initializeModeSwitcher();
             initializeAudioUpload();
             initializeTokenConfig();
+            initializeVoicePreview();
             initializeLanguageSwitcher();
+            document.getElementById('apiBaseDisplay').value = window.location.origin + '/v1';
         });
 
         // 初始化输入方式切换
@@ -1653,6 +1668,7 @@ const HTML_PAGE = `
             const speed = document.getElementById('speed').value;
             const pitch = document.getElementById('pitch').value;
             const style = document.getElementById('style').value;
+            const responseFormat = document.getElementById('responseFormat').value;
             
             const generateBtn = document.getElementById('generateBtn');
             const resultContainer = document.getElementById('result');
@@ -1714,7 +1730,8 @@ const HTML_PAGE = `
                             voice: voice,
                             speed: parseFloat(speed),
                             pitch: pitch,
-                            style: style
+                            style: style,
+                            response_format: responseFormat
                         })
                     });
                 } else {
@@ -1728,6 +1745,7 @@ const HTML_PAGE = `
                     formData.append('speed', speed);
                     formData.append('pitch', pitch);
                     formData.append('style', style);
+                    formData.append('response_format', responseFormat);
                     
                     response = await fetch('/v1/audio/speech', {
                         method: 'POST',
@@ -1908,20 +1926,27 @@ const HTML_PAGE = `
 
         // 初始化Token配置
         function initializeTokenConfig() {
-            const tokenRadios = document.querySelectorAll('input[name="tokenOption"]');
-            const tokenInput = document.getElementById('tokenInput');
+            document.getElementById('sttProvider').addEventListener('change', function() {
+                document.querySelectorAll('.stt-custom-field').forEach(el => el.style.display = this.value === 'openai-compatible' ? 'block' : 'none');
+                document.getElementById('sttModel').value = this.value === 'siliconflow' ? 'FunAudioLLM/SenseVoiceSmall' : 'whisper-1';
+            });
+        }
 
-            tokenRadios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === 'custom') {
-                        tokenInput.style.display = 'block';
-                        tokenInput.required = true;
-                    } else {
-                        tokenInput.style.display = 'none';
-                        tokenInput.required = false;
-                        tokenInput.value = '';
-                    }
-                });
+        function initializeVoicePreview() {
+            document.getElementById('previewVoiceBtn').addEventListener('click', async function() {
+                const button = this;
+                const status = document.getElementById('previewStatus');
+                button.disabled = true;
+                status.textContent = '正在生成试听…';
+                try {
+                    const response = await fetch('/v1/audio/speech', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ input: '你好，这是当前音色的试听示例。', voice: document.getElementById('voice').value, speed: parseFloat(document.getElementById('speed').value), pitch: document.getElementById('pitch').value, style: document.getElementById('style').value, response_format: document.getElementById('responseFormat').value }) });
+                    if (!response.ok) throw new Error((await response.json()).error?.message || '试听失败');
+                    const audio = new Audio(URL.createObjectURL(await response.blob()));
+                    audio.play();
+                    status.textContent = '正在播放试听';
+                    audio.onended = () => { status.textContent = '试听完成'; URL.revokeObjectURL(audio.src); };
+                } catch (error) { status.textContent = '试听失败：' + error.message; }
+                finally { button.disabled = false; }
             });
         }
 
@@ -1941,12 +1966,12 @@ const HTML_PAGE = `
                 return;
             }
             
-            // 获取Token配置
-            const tokenOption = document.querySelector('input[name="tokenOption"]:checked').value;
             const customToken = document.getElementById('tokenInput').value;
-            
-            if (tokenOption === 'custom' && !customToken.trim()) {
-                alert('请输入自定义Token');
+            const provider = document.getElementById('sttProvider').value;
+            const model = document.getElementById('sttModel').value.trim();
+            const baseUrl = document.getElementById('sttBaseUrl').value.trim();
+            if (!model || (provider === 'openai-compatible' && !baseUrl)) {
+                alert('请填写模型；使用兼容服务时还需要 Base URL');
                 return;
             }
             
@@ -1969,9 +1994,10 @@ const HTML_PAGE = `
                 const formData = new FormData();
                 formData.append('file', selectedAudioFile);
                 
-                if (tokenOption === 'custom') {
-                    formData.append('token', customToken);
-                }
+                formData.append('provider', provider);
+                formData.append('model', model);
+                if (customToken) formData.append('token', customToken);
+                if (baseUrl) formData.append('base_url', baseUrl);
                 
                 const response = await fetch('/v1/audio/transcriptions', {
                     method: 'POST',
@@ -2101,13 +2127,19 @@ const HTML_PAGE = `
 </html>
 `;
 
+const LOGIN_PAGE = `<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>CF-voice · 访问验证</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.card{width:min(360px,calc(100% - 40px));box-sizing:border-box;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:30px;box-shadow:0 10px 15px -3px rgb(0 0 0/.1)}h1{margin:0 0 8px;font-size:1.45rem;color:#2563eb}p{margin:0 0 22px;color:#475569;font-size:.9rem}input,button{width:100%;box-sizing:border-box;border-radius:8px;font-size:16px}input{padding:12px;border:1px solid #cbd5e1;margin-bottom:12px}button{padding:12px;border:0;background:#2563eb;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.65}.error{min-height:20px;margin-top:10px;color:#dc2626;font-size:.85rem}</style></head>
+<body><main class="card"><h1>CF-voice</h1><p>请输入访问密码以使用网页界面。</p><form id="login"><input id="password" type="password" autocomplete="current-password" placeholder="访问密码" required autofocus><button>进入</button><div class="error" id="error"></div></form></main>
+<script>document.getElementById('login').addEventListener('submit',async e=>{e.preventDefault();const b=e.target.querySelector('button'),err=document.getElementById('error');b.disabled=true;err.textContent='';try{const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:document.getElementById('password').value})});if(!r.ok)throw new Error('密码不正确');location.replace('/')}catch(x){err.textContent=x.message}finally{b.disabled=false}})</script></body></html>`;
+
 export default {
     async fetch(request, env, ctx) {
-        return handleRequest(request);
+        return handleRequest(request, env);
     }
 };
 
-async function handleRequest(request) {
+async function handleRequest(request, env = {}) {
     if (request.method === "OPTIONS") {
         return handleOptions(request);
     }
@@ -2118,8 +2150,16 @@ async function handleRequest(request) {
     const requestUrl = new URL(request.url);
     const path = requestUrl.pathname;
 
+    // 网页访问控制只作用于页面入口；/v1/* 始终保持可供程序调用。
+    if (path === '/auth/login') {
+        return handleLogin(request, env);
+    }
+
     // 返回前端页面
     if (path === "/" || path === "/index.html") {
+        if (env.ACCESS_PASSWORD && !(await hasValidPageSession(request, env))) {
+            return new Response(LOGIN_PAGE, { status: 401, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+        }
         return new Response(HTML_PAGE, {
             headers: {
                 "Content-Type": "text/html; charset=utf-8",
@@ -2130,7 +2170,7 @@ async function handleRequest(request) {
 
     if (path === "/v1/audio/transcriptions") {
         try {
-            return await handleAudioTranscription(request);
+            return await handleAudioTranscription(request, env);
         } catch (error) {
             console.error("Audio transcription error:", error);
             return new Response(JSON.stringify({
@@ -2164,23 +2204,34 @@ async function handleRequest(request) {
             const {
                 input,
                 voice = "zh-CN-XiaoxiaoNeural",
+                model = "tts-1",
                 speed = '1.0',
                 volume = '0',
                 pitch = '0',
-                style = "general"
+                style = "general",
+                response_format = "mp3"
             } = requestBody;
+
+            if (typeof input !== 'string' || !input.trim()) {
+                return jsonError('input 是必填字符串', 'input', 'invalid_input', 400);
+            }
+            if (!['mp3', 'wav', 'opus', 'pcm'].includes(response_format)) {
+                return jsonError('支持 response_format: mp3、wav、opus 或 pcm', 'response_format', 'invalid_response_format', 400);
+            }
+            const voiceName = normalizeOpenAiVoice(voice);
+            const outputFormat = outputFormatFor(response_format);
 
             let rate = parseInt(String((parseFloat(speed) - 1.0) * 100));
             let numVolume = parseInt(String(parseFloat(volume) * 100));
             let numPitch = parseInt(pitch);
             const response = await getVoice(
                 input,
-                voice,
+                voiceName,
                 rate >= 0 ? `+${rate}%` : `${rate}%`,
                 numPitch >= 0 ? `+${numPitch}Hz` : `${numPitch}Hz`,
                 numVolume >= 0 ? `+${numVolume}%` : `${numVolume}%`,
                 style,
-                "audio-24khz-48kbitrate-mono-mp3"
+                outputFormat
             );
 
             return response;
@@ -2217,6 +2268,58 @@ async function handleOptions(request) {
             "Access-Control-Allow-Headers": request.headers.get("Access-Control-Request-Headers") || "Authorization"
         }
     });
+}
+
+async function handleLogin(request, env) {
+    if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+    if (!env.ACCESS_PASSWORD) return new Response('页面访问密码未启用', { status: 404 });
+    try {
+        const { password } = await request.json();
+        if (typeof password !== 'string' || password !== env.ACCESS_PASSWORD) {
+            return jsonError('密码不正确', 'password', 'invalid_password', 401);
+        }
+        const token = await createPageSession(env);
+        return new Response(JSON.stringify({ ok: true }), {
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store',
+                'Set-Cookie': `${AUTH_COOKIE_NAME}=${token}; Path=/; Max-Age=604800; HttpOnly; Secure; SameSite=Lax`
+            }
+        });
+    } catch (_) {
+        return jsonError('请求格式错误', null, 'invalid_request');
+    }
+}
+
+async function createPageSession(env) {
+    const signature = await hmacSha256(new TextEncoder().encode(env.ACCESS_PASSWORD), 'voicecraft-page-access-v1');
+    return await bytesToBase64(signature);
+}
+
+async function hasValidPageSession(request, env) {
+    const cookie = request.headers.get('Cookie') || '';
+    const matched = cookie.match(new RegExp(`(?:^|;\\s*)${AUTH_COOKIE_NAME}=([^;]+)`));
+    return !!matched && matched[1] === await createPageSession(env);
+}
+
+function jsonError(message, param, code, status = 400) {
+    return new Response(JSON.stringify({ error: { message, type: 'invalid_request_error', param, code } }), { status, headers: { 'Content-Type': 'application/json', ...makeCORSHeaders() } });
+}
+
+function normalizeOpenAiVoice(voice) {
+    const aliases = { alloy: 'en-US-GuyNeural', echo: 'en-US-AndrewNeural', fable: 'en-GB-RyanNeural', onyx: 'en-US-DavisNeural', nova: 'en-US-AriaNeural', shimmer: 'en-US-JennyNeural' };
+    return aliases[String(voice).toLowerCase()] || voice;
+}
+
+function outputFormatFor(responseFormat) {
+    return { mp3: 'audio-24khz-48kbitrate-mono-mp3', wav: 'riff-24khz-16bit-mono-pcm', pcm: 'raw-24khz-16bit-mono-pcm', opus: 'ogg-24khz-16bit-mono-opus' }[responseFormat] || 'audio-24khz-48kbitrate-mono-mp3';
+}
+
+function contentTypeFor(outputFormat) {
+    if (outputFormat.startsWith('riff-')) return 'audio/wav';
+    if (outputFormat.startsWith('raw-')) return 'audio/pcm';
+    if (outputFormat.startsWith('ogg-')) return 'audio/ogg';
+    return 'audio/mpeg';
 }
 
 // 添加延迟函数
@@ -2314,7 +2417,7 @@ async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = '+0%', 
             const audioBlob = await getAudioChunk(cleanText, voiceName, rate, pitch, volume, style, outputFormat);
             return new Response(audioBlob, {
                 headers: {
-                    "Content-Type": "audio/mpeg",
+                    "Content-Type": contentTypeFor(outputFormat),
                     ...makeCORSHeaders()
                 }
             });
@@ -2347,7 +2450,7 @@ async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = '+0%', 
         const concatenatedAudio = new Blob(audioChunks, { type: 'audio/mpeg' });
         return new Response(concatenatedAudio, {
             headers: {
-                "Content-Type": "audio/mpeg",
+                "Content-Type": contentTypeFor(outputFormat),
                 ...makeCORSHeaders()
             }
         });
@@ -2608,6 +2711,7 @@ async function handleFileUpload(request) {
         const volume = formData.get('volume') || '0';
         const pitch = formData.get('pitch') || '0';
         const style = formData.get('style') || 'general';
+        const responseFormat = formData.get('response_format') || 'mp3';
 
         // 验证文件
         if (!file) {
@@ -2715,7 +2819,7 @@ async function handleFileUpload(request) {
             numPitch >= 0 ? `+${numPitch}Hz` : `${numPitch}Hz`,
             numVolume >= 0 ? `+${numVolume}%` : `${numVolume}%`,
             style,
-            "audio-24khz-48kbitrate-mono-mp3"
+            responseFormat === 'wav' ? 'riff-24khz-16bit-mono-pcm' : 'audio-24khz-48kbitrate-mono-mp3'
         );
 
     } catch (error) {
@@ -2738,7 +2842,7 @@ async function handleFileUpload(request) {
 }
 
 // 处理语音转录的函数
-async function handleAudioTranscription(request) {
+async function handleAudioTranscription(request, env = {}) {
     try {
         // 验证请求方法
         if (request.method !== 'POST') {
@@ -2782,6 +2886,12 @@ async function handleAudioTranscription(request) {
         const formData = await request.formData();
         const audioFile = formData.get('file');
         const customToken = formData.get('token');
+        const provider = formData.get('provider') || 'siliconflow';
+        const model = formData.get('model') || (provider === 'siliconflow' ? 'FunAudioLLM/SenseVoiceSmall' : 'whisper-1');
+        const baseUrl = formData.get('base_url');
+        const language = formData.get('language');
+        const prompt = formData.get('prompt');
+        const responseFormat = formData.get('response_format');
 
         // 验证音频文件
         if (!audioFile) {
@@ -2847,16 +2957,29 @@ async function handleAudioTranscription(request) {
             });
         }
 
-        // 使用默认token或用户提供的token
-        const token = customToken || 'sk-wtldsvuprmwltxpbspbmawtolbacghzawnjhtlzlnujjkfhh';
+        if (!['siliconflow', 'openai-compatible'].includes(provider)) {
+            return jsonError('provider 必须为 siliconflow 或 openai-compatible', 'provider', 'invalid_provider');
+        }
+        if (provider === 'openai-compatible' && (!baseUrl || !/^https:\/\//i.test(baseUrl))) {
+            return jsonError('兼容服务需要有效的 HTTPS base_url', 'base_url', 'invalid_base_url');
+        }
+        // 部署者可通过 wrangler secret put STT_API_KEY 配置默认密钥；不再在源码中保留密钥。
+        const token = customToken || env.STT_API_KEY;
+        if (!token) return jsonError('请提供 API Key，或由部署者配置 STT_API_KEY', 'token', 'missing_api_key', 401);
 
         // 构建发送到硅基流动API的FormData
         const apiFormData = new FormData();
         apiFormData.append('file', audioFile);
-        apiFormData.append('model', 'FunAudioLLM/SenseVoiceSmall');
+        apiFormData.append('model', model);
+        if (language) apiFormData.append('language', language);
+        if (prompt) apiFormData.append('prompt', prompt);
+        if (responseFormat) apiFormData.append('response_format', responseFormat);
 
         // 发送请求到硅基流动API
-        const apiResponse = await fetch('https://api.siliconflow.cn/v1/audio/transcriptions', {
+        const endpoint = provider === 'siliconflow'
+            ? 'https://api.siliconflow.cn/v1/audio/transcriptions'
+            : baseUrl.replace(/\/$/, '') + '/audio/transcriptions';
+        const apiResponse = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

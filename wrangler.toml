@@ -1,13 +1,13 @@
-name = "tts-voice-magic"
+name = "cf-voice"
 main = "index.js"
 compatibility_date = "2024-01-15"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-name = "tts-voice-magic"
+name = "cf-voice"
 
 [env.staging]
-name = "tts-voice-magic-staging"
+name = "cf-voice-staging"
 
 # 变量配置（如果需要的话）
 [vars]
