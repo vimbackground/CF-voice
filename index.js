@@ -59,60 +59,14 @@ const HTML_PAGE = `
             padding: 20px;
         }
         
-        .header {
-            background: var(--surface-color);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            padding: 22px 28px;
-            text-align: center;
-            margin-bottom: 30px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 12px;
-            letter-spacing: -0.025em;
-        }
-        
-        .header .subtitle {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        
-        .header .features {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-        
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .feature-icon {
-            width: 20px;
-            height: 20px;
-            color: var(--success-color);
-        }
-        
-        .main-content {
+        .main-content, .transcription-container {
             background: var(--surface-color);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-color);
             overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
         }
         
         .form-container {
@@ -167,6 +121,12 @@ const HTML_PAGE = `
         .settings-panel summary { cursor: pointer; font-weight: 700; color: var(--text-primary); }
         .settings-panel .controls-grid { margin: 14px 0 0; }
         .settings-help { color: var(--text-secondary); font-size: .78rem; margin-top: 6px; }
+        .voice-table-wrap { overflow-x: auto; margin-top: 14px; }
+        .voice-table { width: 100%; border-collapse: collapse; font-size: .82rem; white-space: nowrap; }
+        .voice-table th, .voice-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .voice-table th { color: var(--text-secondary); font-weight: 700; }
+        .voice-table code { color: var(--primary-hover); font-size: .8rem; }
+        .brand-mark { max-width: 900px; margin: 0 auto 12px; color: var(--text-secondary); font-size: .85rem; font-weight: 700; letter-spacing: .04em; }
         
         .btn-primary {
             width: 100%;
@@ -628,16 +588,6 @@ const HTML_PAGE = `
         }
         
         /* 语音转录界面样式 */
-        .transcription-container {
-            background: var(--surface-color);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
         .audio-upload-zone {
             border: 2px dashed var(--border-color);
             border-radius: var(--radius-lg);
@@ -725,85 +675,9 @@ const HTML_PAGE = `
             min-width: 140px;
         }
         
-        /* 语言切换器样式 */
-        .language-switcher {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        
-        .language-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all 0.2s ease;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .language-btn:hover {
-            color: var(--primary-color);
-            border-color: var(--primary-color);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .language-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 4px;
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            min-width: 120px;
-            display: none;
-        }
-        
-        .language-dropdown.show {
-            display: block;
-        }
-        
-        .language-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            transition: background-color 0.2s ease;
-        }
-        
-        .language-option:hover {
-            background: var(--background-color);
-            color: var(--text-primary);
-        }
-        
-        .language-option.active {
-            background: var(--primary-color);
-            color: white;
-        }
-        
         @media (max-width: 768px) {
             .container {
                 padding: 16px;
-            }
-            
-            .header {
-                padding: 30px 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
             }
             
             .form-container {
@@ -902,75 +776,7 @@ const HTML_PAGE = `
     </style>
 </head>
 <body>
-    <!-- 语言切换器 -->
-    <div class="language-switcher">
-        <div class="language-btn" id="languageBtn">
-            <span id="currentLangFlag">🌐</span>
-            <span id="currentLangName" data-i18n="lang.current">English</span>
-            <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-            </svg>
-        </div>
-        <div class="language-dropdown" id="languageDropdown">
-            <div class="language-option" data-lang="en">
-                <span>🇺🇸</span>
-                <span data-i18n="lang.en">English</span>
-            </div>
-            <div class="language-option" data-lang="zh">
-                <span>🇨🇳</span>
-                <span data-i18n="lang.zh">中文</span>
-            </div>
-            <div class="language-option" data-lang="ja">
-                <span>🇯🇵</span>
-                <span data-i18n="lang.ja">日本語</span>
-            </div>
-            <div class="language-option" data-lang="ko">
-                <span>🇰🇷</span>
-                <span data-i18n="lang.ko">한국어</span>
-            </div>
-            <div class="language-option" data-lang="es">
-                <span>🇪🇸</span>
-                <span data-i18n="lang.es">Español</span>
-            </div>
-            <div class="language-option" data-lang="fr">
-                <span>🇫🇷</span>
-                <span data-i18n="lang.fr">Français</span>
-            </div>
-            <div class="language-option" data-lang="de">
-                <span>🇩🇪</span>
-                <span data-i18n="lang.de">Deutsch</span>
-            </div>
-            <div class="language-option" data-lang="ru">
-                <span>🇷🇺</span>
-                <span data-i18n="lang.ru">Русский</span>
-            </div>
-        </div>
-    </div>
-
     <div class="container">
-        <div class="header">
-            <h1 data-i18n="header.title">CF-voice</h1>
-            <p class="subtitle" data-i18n="header.subtitle">AI-Powered Voice Processing Platform</p>
-            <div class="features">
-                <div class="feature-item">
-                    <span class="feature-icon">✨</span>
-                    <span data-i18n="header.feature1">20+ Voice Options</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">⚡</span>
-                    <span data-i18n="header.feature2">Lightning Fast</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">🆓</span>
-                    <span data-i18n="header.feature3">Completely Free</span>
-                </div>
-                <div class="feature-item">
-                    <span class="feature-icon">📱</span>
-                    <span data-i18n="header.feature4">Download Support</span>
-                </div>
-            </div>
-        </div>
-        
         <!-- 主功能切换器 -->
         <div class="mode-switcher">
             <button type="button" class="mode-btn active" id="ttsMode">
@@ -996,6 +802,7 @@ const HTML_PAGE = `
                 <span data-i18n="mode.transcription">Speech to Text</span>
             </button>
         </div>
+        <div class="brand-mark">CF-voice · 中文语音工具</div>
         
         <div class="main-content">
             <div class="form-container">
@@ -1137,6 +944,14 @@ const HTML_PAGE = `
                             <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
                             <div class="form-group"><label class="form-label" for="responseFormat">输出格式</label><select class="form-select" id="responseFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="opus">Opus</option><option value="pcm">PCM</option></select></div>
                         </div>
+                        <div class="voice-table-wrap">
+                            <table class="voice-table"><thead><tr><th>普通话女声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                                <tr><td>晓晓</td><td><code>zh-CN-XiaoxiaoNeural</code></td><td>通用、文章朗读</td></tr><tr><td>晓伊</td><td><code>zh-CN-XiaoyiNeural</code></td><td>轻松、儿童内容</td></tr><tr><td>晓辰</td><td><code>zh-CN-XiaochenNeural</code></td><td>课程、知识讲解</td></tr><tr><td>晓涵</td><td><code>zh-CN-XiaohanNeural</code></td><td>品牌、正式朗读</td></tr><tr><td>晓梦</td><td><code>zh-CN-XiaomengNeural</code></td><td>故事、情感内容</td></tr><tr><td>晓墨</td><td><code>zh-CN-XiaomoNeural</code></td><td>散文、文化内容</td></tr><tr><td>晓秋</td><td><code>zh-CN-XiaoqiuNeural</code></td><td>访谈、说明内容</td></tr><tr><td>晓睿</td><td><code>zh-CN-XiaoruiNeural</code></td><td>问答、产品讲解</td></tr><tr><td>晓双</td><td><code>zh-CN-XiaoshuangNeural</code></td><td>短视频、活动播报</td></tr><tr><td>晓萱</td><td><code>zh-CN-XiaoxuanNeural</code></td><td>生活方式内容</td></tr><tr><td>晓颜</td><td><code>zh-CN-XiaoyanNeural</code></td><td>舒缓、情感文案</td></tr><tr><td>晓悠</td><td><code>zh-CN-XiaoyouNeural</code></td><td>长文、故事内容</td></tr><tr><td>晓甄</td><td><code>zh-CN-XiaozhenNeural</code></td><td>公告、商务介绍</td></tr>
+                            </tbody></table>
+                            <table class="voice-table"><thead><tr><th>普通话男声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                                <tr><td>云希</td><td><code>zh-CN-YunxiNeural</code></td><td>通用、日常讲解</td></tr><tr><td>云扬</td><td><code>zh-CN-YunyangNeural</code></td><td>短视频、活动内容</td></tr><tr><td>云健</td><td><code>zh-CN-YunjianNeural</code></td><td>课程、企业内容</td></tr><tr><td>云枫</td><td><code>zh-CN-YunfengNeural</code></td><td>故事、纪录片旁白</td></tr><tr><td>云皓</td><td><code>zh-CN-YunhaoNeural</code></td><td>宣传、激励文案</td></tr><tr><td>云夏</td><td><code>zh-CN-YunxiaNeural</code></td><td>客服、活动播报</td></tr><tr><td>云野</td><td><code>zh-CN-YunyeNeural</code></td><td>创意、潮流内容</td></tr><tr><td>云泽</td><td><code>zh-CN-YunzeNeural</code></td><td>新闻、正式介绍</td></tr>
+                            </tbody></table>
+                        </div>
                     </details>
                     
                     <button type="submit" class="btn-primary" id="generateBtn">
@@ -1276,7 +1091,7 @@ const HTML_PAGE = `
         let currentMode = 'tts'; // 'tts' or 'transcription'
         let selectedAudioFile = null;
         let transcriptionToken = null;
-        let currentLanguage = 'en'; // 默认语言
+        let currentLanguage = 'zh';
 
         // 国际化翻译数据
         const translations = {
@@ -1549,7 +1364,6 @@ const HTML_PAGE = `
             initializeAudioUpload();
             initializeTokenConfig();
             initializeVoicePreview();
-            initializeLanguageSwitcher();
             document.getElementById('apiBaseDisplay').value = window.location.origin + '/v1';
         });
 
@@ -2083,45 +1897,9 @@ const HTML_PAGE = `
 
         // 初始化国际化
         function initializeI18n() {
-            // 检查本地存储中的语言设置
-            const savedLang = localStorage.getItem('voicecraft-language');
-            
-            if (savedLang && translations[savedLang]) {
-                currentLanguage = savedLang;
-            } else {
-                // 自动检测浏览器语言
-                currentLanguage = detectLanguage();
-            }
-            
-            // 应用语言设置
-            setLanguage(currentLanguage);
+            setLanguage('zh');
         }
 
-        // 初始化语言切换器
-        function initializeLanguageSwitcher() {
-            const languageBtn = document.getElementById('languageBtn');
-            const languageDropdown = document.getElementById('languageDropdown');
-
-            // 切换下拉菜单显示/隐藏
-            languageBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                languageDropdown.classList.toggle('show');
-            });
-
-            // 点击页面其他地方时隐藏下拉菜单
-            document.addEventListener('click', function() {
-                languageDropdown.classList.remove('show');
-            });
-
-            // 语言选择
-            document.querySelectorAll('.language-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    const selectedLang = this.getAttribute('data-lang');
-                    setLanguage(selectedLang);
-                    languageDropdown.classList.remove('show');
-                });
-            });
-        }
     </script>
 </body>
 </html>
