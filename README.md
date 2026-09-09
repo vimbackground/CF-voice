@@ -40,6 +40,8 @@ CF-voice 是一个部署在 Cloudflare Workers 上的轻量语音工具：在浏
 
 部署、访问密码、密钥配置、API 参数和本地开发说明已移至独立文档：[技术与部署指南](docs/technical-guide.md)。
 
+第一次使用网页、在 OpenAI TTS 兼容客户端中配置地址，或不确定“网页密码”和“API Key”区别时，请阅读：[普通用户指南](docs/user-guide.md)。
+
 ## 许可证
 
 [MIT License](LICENSE)

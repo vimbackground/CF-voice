@@ -38,6 +38,8 @@ wrangler secret put ACCESS_PASSWORD
 
 配置 `ACCESS_PASSWORD` 后，`/` 和 `/index.html` 会显示密码页。成功验证后客户端会获得 7 天有效的 `HttpOnly`、`Secure` Cookie。所有 `/v1/*` API 都不会被密码墙拦截。删除该 Secret 后，网页访问保护自动关闭。
 
+这意味着网页访问密码不是 API Key，也不能用于保护 TTS/STT API 的调用额度。部分 OpenAI 兼容客户端要求填写 API Key 时，可以填写任意非空占位值；CF-voice 不校验该字段。若要限制 API 调用，请在 Cloudflare Access、WAF、API Gateway 中配置保护，或自行在 Worker 中实现专用 API Key 校验。普通用户配置示例见 [用户指南](user-guide.md)。
+
 ## API
 
 ### TTS：`POST /v1/audio/speech`
