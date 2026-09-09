@@ -9,9 +9,9 @@ CF-voice 中可能会看到两类完全不同的密码：
 | 你看到的项目 | 用途 | 应该填什么 |
 | --- | --- | --- |
 | 网页访问密码 | 打开 CF-voice 网页时显示的密码页 | 部署者设置的 `ACCESS_PASSWORD` |
-| 客户端的 API Key / 密钥 | 一些 TTS 客户端要求必须填写才能保存设置 | 任意非空占位文本，例如 `cf-voice-local` |
+| 客户端的 API Key / 密钥 | 一些 TTS 客户端要求必须填写才能保存设置 | 未启用 API 保护时填任意非空占位文本；启用后填部署者提供的 API Key |
 
-**网页密码不能作为 API Key 使用，也不需要填入客户端。** 当前版本的网页密码只保护浏览器网页；语音 API（`/v1/*`）不会检查它。客户端中的 API Key 输入框通常只是该客户端的必填项，CF-voice 不会读取、保存或验证其中的占位文本。
+**网页密码不能作为 API Key 使用。** 当前版本的网页密码只保护浏览器网页；语音 API（`/v1/*`）只会在部署者启用 `API_ACCESS_KEY` 后验证 API Key。
 
 > 如果你不是部署者，只需向部署者索要网页密码。不要把自己的第三方平台密钥或聊天平台密钥填进 CF-voice 客户端设置。
 
@@ -107,7 +107,7 @@ https://voice.example.workers.dev
 | --- | --- |
 | 服务类型 | OpenAI TTS / OpenAI Compatible |
 | Base URL / API 地址 | `https://voice.example.workers.dev/v1` |
-| API Key / 密钥 / Password | 任意非空占位值，例如 `cf-voice-local` |
+| API Key / 密钥 / Password | 未启用 API 保护时填 `cf-voice-local`；启用后填部署者提供的 API Key |
 | 模型 | `tts-1` |
 | 音色 | `zh-CN-XiaoxiaoNeural`；也可先试 `nova`、`alloy` 等常见名称 |
 
@@ -120,8 +120,8 @@ https://voice.example.workers.dev
 
 ### API Key / 密码提示怎么处理
 
-- 客户端要求填写 API Key：填 `cf-voice-local` 即可。该值只是让客户端通过自身的表单校验。
-- 客户端要求填写 Password：同样填任意非空占位值，**不要填网页访问密码**。
+- 客户端要求填写 API Key：若部署者未启用 API 保护，填 `cf-voice-local` 即可；若已启用，请填部署者提供的 API Key。
+- 客户端要求填写 Password：未启用 API 保护时填任意非空占位值；启用后填部署者提供的 API Key，**不要填网页访问密码**。
 - 客户端支持留空：可以留空。
 - 出现“401 Unauthorized”：先确认地址是否为自己的 CF-voice 地址。如果正在使用的是第三方 OpenAI 或 STT 服务地址，则该服务的密钥规则与 CF-voice 无关，应向对应服务商查询。
 
@@ -130,7 +130,7 @@ https://voice.example.workers.dev
 1. 在网页切换到“语音转文字”。
 2. 上传音频文件，单个文件不超过 10MB。
 3. 在“STT 服务设置”选择部署者提供的服务；不确定时先选“硅基流动”。
-4. 如果部署者没有配置默认密钥，输入**你自己该 STT 服务的 API Key**。
+4. 如果部署者没有配置默认密钥，输入**你自己该 STT 服务的 API Key**；选择“任意 OpenAI 兼容服务”时，无论如何都必须填写该服务自己的 API Key。
 5. 转录完成后，复制、编辑，或点击“转为语音”。
 
 注意：这里填写的 API Key 是你选定的**语音转文字服务**的密钥，与网页访问密码、客户端占位 API Key 都不同。除非你信任当前部署者，否则不要在公开或他人维护的 CF-voice 网页中输入自己的付费服务密钥。

@@ -34,11 +34,14 @@ wrangler secret put STT_API_KEY
 
 # 启用网页入口访问密码（可选）
 wrangler secret put ACCESS_PASSWORD
+
+# 启用 /v1/* API 专用访问密钥（可选）
+wrangler secret put API_ACCESS_KEY
 ```
 
-配置 `ACCESS_PASSWORD` 后，`/` 和 `/index.html` 会显示密码页。成功验证后客户端会获得 7 天有效的 `HttpOnly`、`Secure` Cookie。所有 `/v1/*` API 都不会被密码墙拦截。删除该 Secret 后，网页访问保护自动关闭。
+配置 `ACCESS_PASSWORD` 后，`/` 和 `/index.html` 会显示密码页。成功验证后客户端会获得 7 天有效的 `HttpOnly`、`Secure` Cookie。所有 `/v1/*` API 都不会被网页密码墙拦截。删除该 Secret 后，网页访问保护自动关闭。
 
-这意味着网页访问密码不是 API Key，也不能用于保护 TTS/STT API 的调用额度。部分 OpenAI 兼容客户端要求填写 API Key 时，可以填写任意非空占位值；CF-voice 不校验该字段。若要限制 API 调用，请在 Cloudflare Access、WAF、API Gateway 中配置保护，或自行在 Worker 中实现专用 API Key 校验。普通用户配置示例见 [用户指南](user-guide.md)。
+若配置 `API_ACCESS_KEY`，所有 `/v1/*` 请求都必须在 `Authorization: Bearer <key>` 或 `x-api-key: <key>` 中携带该密钥；网页的 OpenTTS 设置区也会显示对应输入框。未配置时 API 保持公开兼容。网页访问密码不是 API Key，不能用于保护调用额度。普通用户配置示例见 [用户指南](user-guide.md)。
 
 ## API
 
@@ -72,7 +75,7 @@ TXT 文件可用 `multipart/form-data` 提交到同一路径，字段为 `file`�
 | `file` | 是 | 音频文件，最大 10MB |
 | `provider` | 否 | `siliconflow`（默认）或 `openai-compatible` |
 | `model` | 否 | 识别模型；硅基流动默认 `FunAudioLLM/SenseVoiceSmall` |
-| `token` | 否 | 本次请求的 API Key；未提供时使用 `STT_API_KEY` |
+| `token` | 视服务商而定 | 硅基流动未提供时使用 `STT_API_KEY`；使用 `openai-compatible` 时必须提供该服务自己的 Key |
 | `base_url` | 兼容服务时必填 | HTTPS Base URL，例如 `https://api.example.com/v1` |
 | `language`、`prompt`、`response_format` | 否 | 原样转发给兼容服务 |
 

@@ -59,12 +59,12 @@ const HTML_PAGE = `
             padding: 20px;
         }
         
-        .main-content, .transcription-container {
+        .main-content, .transcription-container, .remote-container {
             background: var(--surface-color);
             border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-color);
-            overflow: hidden;
+            overflow: visible;
             max-width: 900px;
             margin: 0 auto;
         }
@@ -114,6 +114,11 @@ const HTML_PAGE = `
             gap: 12px;
             margin-bottom: 18px;
         }
+        .voice-filter-grid { margin-bottom: 12px; }
+        #voice { min-width: 0; }
+        #voiceControl { grid-column: auto; }
+        #textInputArea .form-textarea, #fileDropZone { height: 190px; min-height: 190px; }
+        #fileDropZone { display: flex; align-items: center; justify-content: center; }
 
         .utility-row { display: flex; gap: 10px; align-items: center; margin: -4px 0 16px; }
         .btn-outline { background: #fff; color: var(--primary-color); border: 1px solid var(--border-focus); padding: 9px 13px; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; }
@@ -126,7 +131,8 @@ const HTML_PAGE = `
         .voice-table th, .voice-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border-color); }
         .voice-table th { color: var(--text-secondary); font-weight: 700; }
         .voice-table code { color: var(--primary-hover); font-size: .8rem; }
-        .brand-mark { max-width: 900px; margin: 0 auto 12px; color: var(--text-secondary); font-size: .85rem; font-weight: 700; letter-spacing: .04em; }
+        .app-bar { max-width: 900px; margin: 0 auto 14px; padding: 0 4px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand-mark { color: var(--primary-color); font-size: 1.2rem; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
         
         .btn-primary {
             width: 100%;
@@ -537,31 +543,26 @@ const HTML_PAGE = `
         
         /* 主功能切换器样式 */
         .mode-switcher {
-            max-width: 900px;
-            margin: 0 auto 30px;
-            padding: 0 20px;
             display: flex;
-            justify-content: center;
-            gap: 20px;
+            gap: 8px;
         }
         
         .mode-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            padding: 16px 32px;
-            border: 2px solid var(--border-color);
+            gap: 6px;
+            padding: 7px 10px;
+            border: 1px solid var(--border-color);
             background: var(--surface-color);
             color: var(--text-secondary);
-            border-radius: var(--radius-lg);
-            font-size: 1rem;
+            border-radius: var(--radius-md);
+            font-size: .82rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            flex: 1;
-            max-width: 250px;
+            white-space: nowrap;
         }
         
         .mode-btn:hover {
@@ -580,8 +581,8 @@ const HTML_PAGE = `
         }
         
         .mode-icon {
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -777,15 +778,16 @@ const HTML_PAGE = `
 </head>
 <body>
     <div class="container">
-        <!-- 主功能切换器 -->
-        <div class="mode-switcher">
+        <div class="app-bar">
+            <div class="brand-mark">CF-voice · 中文语音工具</div>
+            <div class="mode-switcher">
             <button type="button" class="mode-btn active" id="ttsMode">
                 <span class="mode-icon">
                     <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
                     </svg>
                 </span>
-                <span data-i18n="mode.tts">Text to Speech</span>
+                <span>文字转语音</span>
             </button>
             <button type="button" class="mode-btn" id="transcriptionMode">
                 <span class="mode-icon">
@@ -799,10 +801,16 @@ const HTML_PAGE = `
                         <path d="M21 9v6"/>
                     </svg>
                 </span>
-                <span data-i18n="mode.transcription">Speech to Text</span>
+                <span>语音转文字</span>
             </button>
+            <button type="button" class="mode-btn" id="remoteMode"><span>远程调用</span></button>
+            </div>
         </div>
-        <div class="brand-mark">CF-voice · 中文语音工具</div>
+        <div class="remote-container" id="remoteContainer" style="display: none;">
+            <div class="form-container" id="remoteFormContainer">
+                <p class="settings-help">在此查看 OpenTTS / OpenAI 兼容调用地址、输出格式、API Key 和可复制音色名称。</p>
+            </div>
+        </div>
         
         <div class="main-content">
             <div class="form-container">
@@ -863,8 +871,12 @@ const HTML_PAGE = `
                         </div>
                     </div>
                 
+                    <div class="controls-grid voice-filter-grid">
+                        <div class="form-group"><label class="form-label" for="voiceGender">性别筛选</label><select class="form-select" id="voiceGender"><option value="all">全部</option><option value="female">女声</option><option value="male">男声</option></select></div>
+                        <div class="form-group"><label class="form-label" for="voiceScene">适用场景</label><select class="form-select" id="voiceScene"><option value="all">全部场景</option><option value="general">通用 / 讲解</option><option value="formal">正式 / 商务</option><option value="story">故事 / 情感</option><option value="shortvideo">短视频 / 活动</option></select></div>
+                    </div>
                     <div class="controls-grid">
-                        <div class="form-group">
+                        <div class="form-group" id="voiceControl">
                             <label class="form-label" for="voice">语音选择</label>
                             <select class="form-select" id="voice">
                                 <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声·温柔)</option>
@@ -937,12 +949,13 @@ const HTML_PAGE = `
                         <span class="settings-help" id="previewStatus">使用固定示例，不会影响当前文本</span>
                     </div>
 
-                    <details class="settings-panel" id="openTtsSettings">
-                        <summary>OpenTTS / OpenAI 兼容设置</summary>
+                    <section class="settings-panel" id="openTtsSettings">
+                        <div class="form-label">OpenTTS / OpenAI 兼容设置</div>
                         <p class="settings-help">接口地址：<code>/v1/audio/speech</code>。支持 OpenAI 的 input、model、voice、response_format、speed；扩展参数为 pitch、volume、style。</p>
                         <div class="controls-grid">
                             <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
                             <div class="form-group"><label class="form-label" for="responseFormat">输出格式</label><select class="form-select" id="responseFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="opus">Opus</option><option value="pcm">PCM</option></select></div>
+                            <div class="form-group"><label class="form-label" for="apiKeyInput">CF-voice API Key（可选）</label><input class="form-input" id="apiKeyInput" type="password" autocomplete="off" placeholder="部署者启用 API 保护时填写"></div>
                         </div>
                         <div class="voice-table-wrap">
                             <table class="voice-table"><thead><tr><th>普通话女声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
@@ -952,7 +965,7 @@ const HTML_PAGE = `
                                 <tr><td>云希</td><td><code>zh-CN-YunxiNeural</code></td><td>通用、日常讲解</td></tr><tr><td>云扬</td><td><code>zh-CN-YunyangNeural</code></td><td>短视频、活动内容</td></tr><tr><td>云健</td><td><code>zh-CN-YunjianNeural</code></td><td>课程、企业内容</td></tr><tr><td>云枫</td><td><code>zh-CN-YunfengNeural</code></td><td>故事、纪录片旁白</td></tr><tr><td>云皓</td><td><code>zh-CN-YunhaoNeural</code></td><td>宣传、激励文案</td></tr><tr><td>云夏</td><td><code>zh-CN-YunxiaNeural</code></td><td>客服、活动播报</td></tr><tr><td>云野</td><td><code>zh-CN-YunyeNeural</code></td><td>创意、潮流内容</td></tr><tr><td>云泽</td><td><code>zh-CN-YunzeNeural</code></td><td>新闻、正式介绍</td></tr>
                             </tbody></table>
                         </div>
-                    </details>
+                    </section>
                     
                     <button type="submit" class="btn-primary" id="generateBtn">
                         <span>🎙️</span>
@@ -1061,28 +1074,6 @@ const HTML_PAGE = `
             </div>
         </div>
         
-        <!-- 公众号推广组件 -->
-        <div class="wechat-promotion" id="wechatPromotion" style="display: none;">
-            <div class="promotion-header">
-                <h2 class="promotion-title">🎉 生成成功！喜欢这个工具吗？</h2>
-                <p class="promotion-subtitle">关注我们获取更多AI工具和技术分享</p>
-            </div>
-            <div class="promotion-content">
-                <div class="qr-code">
-                    <img src="https://img.996007.icu/file/img1/a48c4eac2f2a99909da5611c3885726.jpg" alt="微信公众号二维码" />
-                </div>
-                <div class="promotion-info">
-                    <h3>关注「一只会飞的旺旺」公众号</h3>
-                    <p>获取更多实用的AI工具、技术教程和独家资源分享</p>
-                    <ul class="benefits-list">
-                        <li>最新AI工具推荐和使用教程</li>
-                        <li>前沿技术解析和实战案例</li>
-                        <li>独家资源和工具源码分享</li>
-                        <li>技术问题答疑和交流社群</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -1090,8 +1081,6 @@ const HTML_PAGE = `
         let currentInputMethod = 'text'; // 'text' or 'file'
         let currentMode = 'tts'; // 'tts' or 'transcription'
         let selectedAudioFile = null;
-        let transcriptionToken = null;
-        let currentLanguage = 'zh';
 
         // 国际化翻译数据
         const translations = {
@@ -1298,8 +1287,6 @@ const HTML_PAGE = `
             // 应用翻译
             applyTranslations();
             
-            // 更新语言切换器
-            updateLanguageSwitcher();
         }
 
         function applyTranslations() {
@@ -1359,8 +1346,10 @@ const HTML_PAGE = `
             
             // 初始化其他功能
             initializeInputMethodTabs();
+            initializeVoiceFilters();
             initializeFileUpload();
             initializeModeSwitcher();
+            initializeRemotePanel();
             initializeAudioUpload();
             initializeTokenConfig();
             initializeVoicePreview();
@@ -1391,6 +1380,33 @@ const HTML_PAGE = `
                 fileUploadArea.style.display = 'block';
                 document.getElementById('text').required = false;
             });
+        }
+
+        function initializeVoiceFilters() {
+            const gender = document.getElementById('voiceGender');
+            const scene = document.getElementById('voiceScene');
+            const voice = document.getElementById('voice');
+            document.querySelector('.voice-filter-grid').appendChild(document.getElementById('voiceControl'));
+            const profiles = {
+                'zh-CN-XiaoxiaoNeural': ['female', 'general'], 'zh-CN-XiaoyiNeural': ['female', 'shortvideo'], 'zh-CN-XiaochenNeural': ['female', 'general'], 'zh-CN-XiaohanNeural': ['female', 'formal'], 'zh-CN-XiaomengNeural': ['female', 'story'], 'zh-CN-XiaomoNeural': ['female', 'story'], 'zh-CN-XiaoqiuNeural': ['female', 'formal'], 'zh-CN-XiaoruiNeural': ['female', 'general'], 'zh-CN-XiaoshuangNeural': ['female', 'shortvideo'], 'zh-CN-XiaoxuanNeural': ['female', 'general'], 'zh-CN-XiaoyanNeural': ['female', 'story'], 'zh-CN-XiaoyouNeural': ['female', 'story'], 'zh-CN-XiaozhenNeural': ['female', 'formal'], 'zh-CN-YunxiNeural': ['male', 'general'], 'zh-CN-YunyangNeural': ['male', 'shortvideo'], 'zh-CN-YunjianNeural': ['male', 'formal'], 'zh-CN-YunfengNeural': ['male', 'story'], 'zh-CN-YunhaoNeural': ['male', 'shortvideo'], 'zh-CN-YunxiaNeural': ['male', 'shortvideo'], 'zh-CN-YunyeNeural': ['male', 'shortvideo'], 'zh-CN-YunzeNeural': ['male', 'formal']
+            };
+            function filterVoices() {
+                let firstVisible = null;
+                [...voice.options].forEach(option => {
+                    const profile = profiles[option.value];
+                    const visible = profile && (gender.value === 'all' || profile[0] === gender.value) && (scene.value === 'all' || profile[1] === scene.value);
+                    option.hidden = !visible;
+                    if (visible && !firstVisible) firstVisible = option;
+                });
+                if (voice.selectedOptions[0]?.hidden && firstVisible) voice.value = firstVisible.value;
+            }
+            gender.addEventListener('change', filterVoices);
+            scene.addEventListener('change', filterVoices);
+        }
+
+        function apiHeaders(headers = {}) {
+            const apiKey = document.getElementById('apiKeyInput')?.value.trim();
+            return apiKey ? { ...headers, 'Authorization': 'Bearer ' + apiKey } : headers;
         }
 
         // 初始化文件上传功能
@@ -1536,9 +1552,9 @@ const HTML_PAGE = `
                     
                     response = await fetch('/v1/audio/speech', {
                         method: 'POST',
-                        headers: {
+                        headers: apiHeaders({
                             'Content-Type': 'application/json',
-                        },
+                        }),
                         body: JSON.stringify({
                             input: text,
                             voice: voice,
@@ -1563,6 +1579,7 @@ const HTML_PAGE = `
                     
                     response = await fetch('/v1/audio/speech', {
                         method: 'POST',
+                        headers: apiHeaders(),
                         body: formData
                     });
                 }
@@ -1584,13 +1601,6 @@ const HTML_PAGE = `
                 
                 loading.style.display = 'none';
                 success.style.display = 'block';
-                
-                // 显示公众号推广组件
-                setTimeout(() => {
-                    const wechatPromotion = document.getElementById('wechatPromotion');
-                    wechatPromotion.style.display = 'block';
-                    wechatPromotion.classList.add('fade-in');
-                }, 1000);
                 
             } catch (err) {
                 loading.style.display = 'none';
@@ -1616,6 +1626,7 @@ const HTML_PAGE = `
         function initializeModeSwitcher() {
             const ttsMode = document.getElementById('ttsMode');
             const transcriptionMode = document.getElementById('transcriptionMode');
+            const remoteMode = document.getElementById('remoteMode');
             const mainContent = document.querySelector('.main-content');
             const transcriptionContainer = document.getElementById('transcriptionContainer');
 
@@ -1626,15 +1637,22 @@ const HTML_PAGE = `
             transcriptionMode.addEventListener('click', function() {
                 switchMode('transcription');
             });
+            remoteMode.addEventListener('click', function() { switchMode('remote'); });
+        }
+
+        function initializeRemotePanel() {
+            const settings = document.getElementById('openTtsSettings');
+            document.getElementById('remoteFormContainer').appendChild(settings);
         }
 
         // 切换功能模式
         function switchMode(mode) {
             const ttsMode = document.getElementById('ttsMode');
             const transcriptionMode = document.getElementById('transcriptionMode');
+            const remoteMode = document.getElementById('remoteMode');
             const mainContent = document.querySelector('.main-content');
             const transcriptionContainer = document.getElementById('transcriptionContainer');
-            const wechatPromotion = document.getElementById('wechatPromotion');
+            const remoteContainer = document.getElementById('remoteContainer');
 
             currentMode = mode;
 
@@ -1642,18 +1660,27 @@ const HTML_PAGE = `
                 // 切换到TTS模式
                 ttsMode.classList.add('active');
                 transcriptionMode.classList.remove('active');
+                remoteMode.classList.remove('active');
                 mainContent.style.display = 'block';
                 transcriptionContainer.style.display = 'none';
-            } else {
+                remoteContainer.style.display = 'none';
+            } else if (mode === 'transcription') {
                 // 切换到语音转录模式
                 transcriptionMode.classList.add('active');
                 ttsMode.classList.remove('active');
+                remoteMode.classList.remove('active');
                 mainContent.style.display = 'none';
                 transcriptionContainer.style.display = 'block';
+                remoteContainer.style.display = 'none';
+            } else {
+                remoteMode.classList.add('active');
+                ttsMode.classList.remove('active');
+                transcriptionMode.classList.remove('active');
+                mainContent.style.display = 'none';
+                transcriptionContainer.style.display = 'none';
+                remoteContainer.style.display = 'block';
             }
 
-            // 隐藏推广组件
-            wechatPromotion.style.display = 'none';
         }
 
         // 初始化音频上传功能
@@ -1753,7 +1780,7 @@ const HTML_PAGE = `
                 button.disabled = true;
                 status.textContent = '正在生成试听…';
                 try {
-                    const response = await fetch('/v1/audio/speech', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ input: '你好，这是当前音色的试听示例。', voice: document.getElementById('voice').value, speed: parseFloat(document.getElementById('speed').value), pitch: document.getElementById('pitch').value, style: document.getElementById('style').value, response_format: document.getElementById('responseFormat').value }) });
+                    const response = await fetch('/v1/audio/speech', { method: 'POST', headers: apiHeaders({'Content-Type': 'application/json'}), body: JSON.stringify({ input: '你好，这是当前音色的试听示例。', voice: document.getElementById('voice').value, speed: parseFloat(document.getElementById('speed').value), pitch: document.getElementById('pitch').value, style: document.getElementById('style').value, response_format: document.getElementById('responseFormat').value }) });
                     if (!response.ok) throw new Error((await response.json()).error?.message || '试听失败');
                     const audio = new Audio(URL.createObjectURL(await response.blob()));
                     audio.play();
@@ -1784,8 +1811,8 @@ const HTML_PAGE = `
             const provider = document.getElementById('sttProvider').value;
             const model = document.getElementById('sttModel').value.trim();
             const baseUrl = document.getElementById('sttBaseUrl').value.trim();
-            if (!model || (provider === 'openai-compatible' && !baseUrl)) {
-                alert('请填写模型；使用兼容服务时还需要 Base URL');
+            if (!model || (provider === 'openai-compatible' && (!baseUrl || !customToken))) {
+                alert('请填写模型；使用兼容服务时还需要 Base URL 和该服务自己的 API Key');
                 return;
             }
             
@@ -1815,6 +1842,7 @@ const HTML_PAGE = `
                 
                 const response = await fetch('/v1/audio/transcriptions', {
                     method: 'POST',
+                    headers: apiHeaders(),
                     body: formData
                 });
                 
@@ -1829,13 +1857,6 @@ const HTML_PAGE = `
                 document.getElementById('transcriptionText').value = result.text || '';
                 transcriptionLoading.style.display = 'none';
                 transcriptionSuccess.style.display = 'block';
-                
-                // 显示公众号推广组件
-                setTimeout(() => {
-                    const wechatPromotion = document.getElementById('wechatPromotion');
-                    wechatPromotion.style.display = 'block';
-                    wechatPromotion.classList.add('fade-in');
-                }, 1000);
                 
             } catch (err) {
                 transcriptionLoading.style.display = 'none';
@@ -1897,7 +1918,8 @@ const HTML_PAGE = `
 
         // 初始化国际化
         function initializeI18n() {
-            setLanguage('zh');
+            document.documentElement.lang = 'zh-CN';
+            document.title = 'CF-voice · 中文语音工具';
         }
 
     </script>
@@ -1931,6 +1953,10 @@ async function handleRequest(request, env = {}) {
     // 网页访问控制只作用于页面入口；/v1/* 始终保持可供程序调用。
     if (path === '/auth/login') {
         return handleLogin(request, env);
+    }
+
+    if (path.startsWith('/v1/') && !hasValidApiKey(request, env)) {
+        return jsonError('API Key 无效或未提供', null, 'invalid_api_key', 401);
     }
 
     // 返回前端页面
@@ -2080,6 +2106,13 @@ async function hasValidPageSession(request, env) {
     return !!matched && matched[1] === await createPageSession(env);
 }
 
+function hasValidApiKey(request, env) {
+    if (!env.API_ACCESS_KEY) return true;
+    const bearer = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    const apiKey = request.headers.get('x-api-key') || bearer;
+    return apiKey === env.API_ACCESS_KEY;
+}
+
 function jsonError(message, param, code, status = 400) {
     return new Response(JSON.stringify({ error: { message, type: 'invalid_request_error', param, code } }), { status, headers: { 'Content-Type': 'application/json', ...makeCORSHeaders() } });
 }
@@ -2188,6 +2221,9 @@ async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = '+0%', 
         const cleanText = text.trim();
         if (!cleanText) {
             throw new Error("文本内容为空");
+        }
+        if (cleanText.length > 1500 && outputFormat !== 'audio-24khz-48kbitrate-mono-mp3') {
+            throw new Error('长文本合成当前仅支持 MP3 输出；WAV、Opus 和 PCM 请分段生成');
         }
         
         // 如果文本很短，直接处理
@@ -2741,8 +2777,11 @@ async function handleAudioTranscription(request, env = {}) {
         if (provider === 'openai-compatible' && (!baseUrl || !/^https:\/\//i.test(baseUrl))) {
             return jsonError('兼容服务需要有效的 HTTPS base_url', 'base_url', 'invalid_base_url');
         }
-        // 部署者可通过 wrangler secret put STT_API_KEY 配置默认密钥；不再在源码中保留密钥。
-        const token = customToken || env.STT_API_KEY;
+        // 默认密钥仅能用于固定的硅基流动端点，绝不能转发至调用方指定的地址。
+        if (provider === 'openai-compatible' && !customToken) {
+            return jsonError('使用兼容服务时必须提供该服务自己的 API Key', 'token', 'missing_api_key', 401);
+        }
+        const token = provider === 'siliconflow' ? (customToken || env.STT_API_KEY) : customToken;
         if (!token) return jsonError('请提供 API Key，或由部署者配置 STT_API_KEY', 'token', 'missing_api_key', 401);
 
         // 构建发送到硅基流动API的FormData
