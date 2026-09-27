@@ -1001,27 +1001,184 @@ let selectedFile = null;
     let abChunks = [];
     let abCurrentIndex = 0;
     let abAudio = new Audio();
-    let abNextAudio = new Audio();
     let isPlaying = false;
     let nextChunkLoaded = false;
+    let preloadedBlobUrl = null;
+    let currentSettingsKey = '';
     
-    // UI Elements
+    // UI Elements - Setup Area
     const setupArea = document.getElementById('abSetupArea');
     const playerArea = document.getElementById('abPlayerArea');
     const inputText = document.getElementById('abInputText');
     const fileInput = document.getElementById('abFileInput');
     const uploadBtn = document.getElementById('abUploadBtn');
+    const fileHint = document.getElementById('abFileHint');
     const startBtn = document.getElementById('abStartBtn');
+    const loadTextBtn = document.getElementById('abLoadTextBtn');
+    
+    // Setup Controls
+    const setupVoiceGender = document.getElementById('abSetupVoiceGender');
+    const setupVoiceScene = document.getElementById('abSetupVoiceScene');
+    const setupVoiceSelect = document.getElementById('abSetupVoiceSelect');
+    const setupStyleSelect = document.getElementById('abSetupStyleSelect');
+    const setupSpeedSelect = document.getElementById('abSetupSpeedSelect');
+    const setupPitchSelect = document.getElementById('abSetupPitchSelect');
+
+    // UI Elements - Player Area
     const readerView = document.getElementById('abReaderView');
     const progressText = document.getElementById('abProgressText');
     const progressBar = document.getElementById('abProgressBar');
     const playPauseBtn = document.getElementById('abPlayPauseBtn');
+    const exitBtn = document.getElementById('abExitBtn');
+    const prevBtn = document.getElementById('abPrevBtn');
+    const nextBtn = document.getElementById('abNextBtn');
+
+    // Player Controls
+    const voiceGender = document.getElementById('abVoiceGender');
+    const voiceScene = document.getElementById('abVoiceScene');
     const voiceSelect = document.getElementById('abVoiceSelect');
-    const pitchSelect = document.getElementById('abPitchSelect');
+    const styleSelect = document.getElementById('abStyleSelect');
     const speedSelect = document.getElementById('abSpeedSelect');
-    const loadTextBtn = document.getElementById('abLoadTextBtn');
+    const pitchSelect = document.getElementById('abPitchSelect');
     
     if(!setupArea) return;
+
+    const voiceProfiles = {
+        'zh-CN-XiaoxiaoNeural': ['female', 'general'],
+        'zh-CN-XiaoyiNeural': ['female', 'shortvideo'],
+        'zh-CN-XiaochenNeural': ['female', 'general'],
+        'zh-CN-XiaohanNeural': ['female', 'formal'],
+        'zh-CN-XiaomengNeural': ['female', 'story'],
+        'zh-CN-XiaomoNeural': ['female', 'story'],
+        'zh-CN-XiaoqiuNeural': ['female', 'formal'],
+        'zh-CN-XiaoruiNeural': ['female', 'general'],
+        'zh-CN-XiaoshuangNeural': ['female', 'shortvideo'],
+        'zh-CN-XiaoxuanNeural': ['female', 'general'],
+        'zh-CN-XiaoyanNeural': ['female', 'story'],
+        'zh-CN-XiaoyouNeural': ['female', 'story'],
+        'zh-CN-XiaozhenNeural': ['female', 'formal'],
+        'zh-CN-YunxiNeural': ['male', 'general'],
+        'zh-CN-YunyangNeural': ['male', 'shortvideo'],
+        'zh-CN-YunjianNeural': ['male', 'formal'],
+        'zh-CN-YunfengNeural': ['male', 'story'],
+        'zh-CN-YunhaoNeural': ['male', 'shortvideo'],
+        'zh-CN-YunxiaNeural': ['male', 'shortvideo'],
+        'zh-CN-YunyeNeural': ['male', 'shortvideo'],
+        'zh-CN-YunzeNeural': ['male', 'formal']
+    };
+
+    function applyVoiceFilter(genderEl, sceneEl, voiceEl) {
+        if (!genderEl || !sceneEl || !voiceEl) return;
+        let firstVisible = null;
+        [...voiceEl.options].forEach(opt => {
+            const prof = voiceProfiles[opt.value];
+            const visible = prof && (genderEl.value === 'all' || prof[0] === genderEl.value) && (sceneEl.value === 'all' || prof[1] === sceneEl.value);
+            opt.hidden = !visible;
+            if (visible && !firstVisible) firstVisible = opt;
+        });
+        if (voiceEl.selectedOptions[0]?.hidden && firstVisible) {
+            voiceEl.value = firstVisible.value;
+        }
+    }
+
+    // Sync helpers
+    function syncSetupToPlayer() {
+        if (voiceGender && setupVoiceGender) voiceGender.value = setupVoiceGender.value;
+        if (voiceScene && setupVoiceScene) voiceScene.value = setupVoiceScene.value;
+        applyVoiceFilter(voiceGender, voiceScene, voiceSelect);
+        if (voiceSelect && setupVoiceSelect) voiceSelect.value = setupVoiceSelect.value;
+        if (styleSelect && setupStyleSelect) styleSelect.value = setupStyleSelect.value;
+        if (speedSelect && setupSpeedSelect) speedSelect.value = setupSpeedSelect.value;
+        if (pitchSelect && setupPitchSelect) pitchSelect.value = setupPitchSelect.value;
+        saveAudiobookSettings();
+    }
+
+    function syncPlayerToSetup() {
+        if (setupVoiceGender && voiceGender) setupVoiceGender.value = voiceGender.value;
+        if (setupVoiceScene && voiceScene) setupVoiceScene.value = voiceScene.value;
+        applyVoiceFilter(setupVoiceGender, setupVoiceScene, setupVoiceSelect);
+        if (setupVoiceSelect && voiceSelect) setupVoiceSelect.value = voiceSelect.value;
+        if (setupStyleSelect && styleSelect) setupStyleSelect.value = styleSelect.value;
+        if (setupSpeedSelect && speedSelect) setupSpeedSelect.value = speedSelect.value;
+        if (setupPitchSelect && pitchSelect) setupPitchSelect.value = pitchSelect.value;
+        saveAudiobookSettings();
+    }
+
+    function saveAudiobookSettings() {
+        if (!voiceSelect) return;
+        localStorage.setItem('ab_voice', voiceSelect.value);
+        localStorage.setItem('ab_gender', voiceGender?.value || 'all');
+        localStorage.setItem('ab_scene', voiceScene?.value || 'all');
+        localStorage.setItem('ab_style', styleSelect?.value || 'general');
+        localStorage.setItem('ab_speed', speedSelect?.value || '1.0');
+        localStorage.setItem('ab_pitch', pitchSelect?.value || '0');
+    }
+
+    function loadAudiobookSettings() {
+        const savedGender = localStorage.getItem('ab_gender') || 'all';
+        const savedScene = localStorage.getItem('ab_scene') || 'all';
+        const savedVoice = localStorage.getItem('ab_voice') || 'zh-CN-XiaoxiaoNeural';
+        const savedStyle = localStorage.getItem('ab_style') || 'general';
+        const savedSpeed = localStorage.getItem('ab_speed') || '1.0';
+        const savedPitch = localStorage.getItem('ab_pitch') || '0';
+
+        [setupVoiceGender, voiceGender].forEach(el => { if (el) el.value = savedGender; });
+        [setupVoiceScene, voiceScene].forEach(el => { if (el) el.value = savedScene; });
+
+        applyVoiceFilter(setupVoiceGender, setupVoiceScene, setupVoiceSelect);
+        applyVoiceFilter(voiceGender, voiceScene, voiceSelect);
+
+        [setupVoiceSelect, voiceSelect].forEach(el => { if (el) el.value = savedVoice; });
+        [setupStyleSelect, styleSelect].forEach(el => { if (el) el.value = savedStyle; });
+        [setupSpeedSelect, speedSelect].forEach(el => { if (el) el.value = savedSpeed; });
+        [setupPitchSelect, pitchSelect].forEach(el => { if (el) el.value = savedPitch; });
+    }
+
+    // Bind setup filter listeners
+    if (setupVoiceGender) {
+        setupVoiceGender.addEventListener('change', () => {
+            applyVoiceFilter(setupVoiceGender, setupVoiceScene, setupVoiceSelect);
+            syncSetupToPlayer();
+        });
+    }
+    if (setupVoiceScene) {
+        setupVoiceScene.addEventListener('change', () => {
+            applyVoiceFilter(setupVoiceGender, setupVoiceScene, setupVoiceSelect);
+            syncSetupToPlayer();
+        });
+    }
+    if (setupVoiceSelect) {
+        setupVoiceSelect.addEventListener('change', syncSetupToPlayer);
+    }
+    if (setupStyleSelect) setupStyleSelect.addEventListener('change', syncSetupToPlayer);
+    if (setupSpeedSelect) setupSpeedSelect.addEventListener('change', syncSetupToPlayer);
+    if (setupPitchSelect) setupPitchSelect.addEventListener('change', syncSetupToPlayer);
+
+    // Bind player filter & settings listeners
+    function onPlayerSettingChange() {
+        syncPlayerToSetup();
+        if (isPlaying) {
+            nextChunkLoaded = false;
+            jumpTo(abCurrentIndex);
+        }
+    }
+
+    if (voiceGender) {
+        voiceGender.addEventListener('change', () => {
+            applyVoiceFilter(voiceGender, voiceScene, voiceSelect);
+            onPlayerSettingChange();
+        });
+    }
+    if (voiceScene) {
+        voiceScene.addEventListener('change', () => {
+            applyVoiceFilter(voiceGender, voiceScene, voiceSelect);
+            onPlayerSettingChange();
+        });
+    }
+    if (voiceSelect) voiceSelect.addEventListener('change', onPlayerSettingChange);
+    if (styleSelect) styleSelect.addEventListener('change', onPlayerSettingChange);
+    if (speedSelect) speedSelect.addEventListener('change', onPlayerSettingChange);
+    if (pitchSelect) pitchSelect.addEventListener('change', onPlayerSettingChange);
 
     // Remove markdown symbols and format
     function stripMarkdown(text) {
@@ -1059,7 +1216,6 @@ let selectedFile = null;
             span.innerText = chunk;
             span.dataset.index = index;
             span.addEventListener('click', () => jumpTo(index));
-            
             readerView.appendChild(span);
         });
     }
@@ -1075,7 +1231,7 @@ let selectedFile = null;
         }
         
         progressText.innerText = `${abCurrentIndex + 1} / ${abChunks.length}`;
-        progressBar.max = abChunks.length - 1;
+        progressBar.max = Math.max(0, abChunks.length - 1);
         progressBar.value = abCurrentIndex;
 
         // Save progress
@@ -1088,11 +1244,7 @@ let selectedFile = null;
         }
     }
 
-    let preloadedBlobUrl = null;
-    let currentVoice = '';
-
-    async function fetchTTSBlob(text, voice, speed, pitch) {
-        // Need to pass password if it exists
+    async function fetchTTSBlob(text, voice, speed, pitch, style) {
         const headers = {};
         const pwd = localStorage.getItem('access_password');
         if (pwd) headers['Authorization'] = 'Bearer ' + pwd;
@@ -1106,7 +1258,7 @@ let selectedFile = null;
                 voice: voice,
                 speed: speed,
                 pitch: pitch,
-                style: 'general'
+                style: style || 'general'
             })
         });
         if(!res.ok) {
@@ -1125,9 +1277,11 @@ let selectedFile = null;
 
         updateHighlight();
         const chunk = abChunks[abCurrentIndex];
-        const voice = voiceSelect.value;
+        const voice = voiceSelect ? voiceSelect.value : 'zh-CN-XiaoxiaoNeural';
         const speed = speedSelect ? speedSelect.value : 1.0;
         const pitch = pitchSelect ? pitchSelect.value : '0';
+        const style = styleSelect ? styleSelect.value : 'general';
+        const settingsKey = `${voice}_${speed}_${pitch}_${style}`;
         
         const cleanText = chunk.trim();
         if (!cleanText) {
@@ -1136,14 +1290,14 @@ let selectedFile = null;
         }
         
         try {
-            if(nextChunkLoaded && preloadedBlobUrl && currentVoice === voice) {
+            if(nextChunkLoaded && preloadedBlobUrl && currentSettingsKey === settingsKey) {
                 abAudio.src = preloadedBlobUrl;
             } else {
                 if(abAudio.src) URL.revokeObjectURL(abAudio.src);
                 playPauseBtn.innerHTML = '<span class="ab-icon">⏳</span>缓冲';
-                const blobUrl = await fetchTTSBlob(chunk, voice, speed, pitch);
+                const blobUrl = await fetchTTSBlob(chunk, voice, speed, pitch, style);
                 abAudio.src = blobUrl;
-                currentVoice = voice;
+                currentSettingsKey = settingsKey;
             }
             
             await abAudio.play();
@@ -1158,8 +1312,9 @@ let selectedFile = null;
                     nextIndex++;
                 }
                 if (nextIndex < abChunks.length) {
-                    fetchTTSBlob(abChunks[nextIndex], voice, speed, pitch).then(url => {
+                    fetchTTSBlob(abChunks[nextIndex], voice, speed, pitch, style).then(url => {
                         preloadedBlobUrl = url;
+                        currentSettingsKey = settingsKey;
                         nextChunkLoaded = true;
                     }).catch(e => console.error(e));
                 }
@@ -1181,7 +1336,7 @@ let selectedFile = null;
     };
 
     function jumpTo(index) {
-        abCurrentIndex = index;
+        abCurrentIndex = Math.max(0, Math.min(index, abChunks.length - 1));
         nextChunkLoaded = false;
         abAudio.pause();
         playCurrent();
@@ -1197,37 +1352,28 @@ let selectedFile = null;
         }
     });
 
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (abCurrentIndex > 0) {
+                jumpTo(abCurrentIndex - 1);
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (abCurrentIndex + 1 < abChunks.length) {
+                jumpTo(abCurrentIndex + 1);
+            }
+        });
+    }
+
     progressBar.addEventListener('input', (e) => {
         const index = parseInt(e.target.value);
         if(index !== abCurrentIndex) {
             jumpTo(index);
         }
     });
-    
-    voiceSelect.addEventListener('change', () => {
-        if (isPlaying) {
-            nextChunkLoaded = false; // invalidate cache
-            jumpTo(abCurrentIndex); // replay current with new voice
-        }
-    });
-    
-    if (pitchSelect) {
-        pitchSelect.addEventListener('change', () => {
-            if (isPlaying) {
-                nextChunkLoaded = false;
-                jumpTo(abCurrentIndex);
-            }
-        });
-    }
-
-    if (speedSelect) {
-        speedSelect.addEventListener('change', () => {
-            if (isPlaying) {
-                nextChunkLoaded = false;
-                jumpTo(abCurrentIndex);
-            }
-        });
-    }
 
     startBtn.addEventListener('click', () => {
         const text = inputText.value.trim();
@@ -1239,6 +1385,9 @@ let selectedFile = null;
         abChunks = splitTextToChunks(text);
         if(abChunks.length === 0) return;
         
+        // Ensure settings are synced to player
+        syncSetupToPlayer();
+
         setupArea.style.display = 'none';
         playerArea.style.display = 'block';
         
@@ -1269,6 +1418,9 @@ let selectedFile = null;
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if(!file) return;
+        if (fileHint) {
+            fileHint.textContent = `已载入: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             inputText.value = e.target.result;
@@ -1276,17 +1428,25 @@ let selectedFile = null;
         reader.readAsText(file);
     });
 
-    loadTextBtn.addEventListener('click', () => {
+    function exitAudiobook() {
         abAudio.pause();
         isPlaying = false;
         playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
-        
+        nextChunkLoaded = false;
+        if (preloadedBlobUrl) {
+            URL.revokeObjectURL(preloadedBlobUrl);
+            preloadedBlobUrl = null;
+        }
         setupArea.style.display = 'block';
         playerArea.style.display = 'none';
-    });
+    }
+
+    if (loadTextBtn) loadTextBtn.addEventListener('click', exitAudiobook);
+    if (exitBtn) exitBtn.addEventListener('click', exitAudiobook);
     
-    // Auto restore if previous text exists
+    // Auto restore if previous text or settings exist
     window.addEventListener('DOMContentLoaded', () => {
+        loadAudiobookSettings();
         const savedText = localStorage.getItem('audiobook_fulltext');
         if(savedText) {
             inputText.value = savedText;
