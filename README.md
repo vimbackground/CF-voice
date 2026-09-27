@@ -2,18 +2,21 @@
 
 CF-voice 是一个部署在 Cloudflare Workers 上的轻量语音工具：在浏览器中将文字转为语音，或将音频转为文本。无需安装客户端，打开网页即可使用。
 
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/vimbackground/CF-voice)
 
 ## 能做什么
 
-- 文字转语音：内置多种 Edge Neural 音色，可调节语速、音调和表达风格。
-- 生成前试听：按当前选择快速试听音色，无需先输入完整文本。
-- 语音转文字：上传常见音频文件并得到可复制、可编辑的转写结果。
-- 多服务 STT：可使用硅基流动，或接入任意 OpenAI 兼容的转录服务。
-- 多格式导出：生成 MP3、WAV、Opus 或 PCM 音频，并可直接播放或下载。
-- 文本与文件输入：既支持直接粘贴文字，也支持上传 TXT 文件。
-- 多语言界面：提供中文、英文、日文、韩文、西班牙文、法文、德文和俄文界面。
-- 网页访问保护：部署者可选配访问密码；开启后仅网页界面需要验证，程序 API 调用不受影响。
+- **文字转语音**：内置多种 Edge Neural 音色，可调节语速、音调和表达风格。
+- **生成前试听**：按当前选择快速试听音色，无需先输入完整文本。
+- **语音转文字**：上传常见音频文件并得到可复制、可编辑的转写结果。
+- **多服务 STT**：可使用硅基流动，或接入任意 OpenAI 兼容的转录服务。
+- **多格式导出**：生成 MP3、WAV、Opus 或 PCM 音频，并可直接播放或下载。
+- **文本与文件输入**：既支持直接粘贴文字，也支持上传 TXT 文件。
+- **多语言界面**：提供中文、英文、日文、韩文、西班牙文、法文、德文和俄文界面。
+- **网页访问保护**：部署者可选配访问密码；开启后仅网页界面需要验证，程序 API 调用不受影响。
+- **工程化模块架构**：v2.0.0 采用清晰的分层工程架构（API/Utils/Frontend），前后端资源彻底分离，且保持 0 外部 npm 运行时依赖。
 
 ## 使用方式
 
@@ -36,11 +39,17 @@ CF-voice 是一个部署在 Cloudflare Workers 上的轻量语音工具：在浏
 - 整理访谈、录音、会议或短视频的文字稿
 - 为脚本、自动化或应用提供标准化的语音能力
 
+## 版本与更新日志
+
+本项目遵循语义化版本规范，完整的版本演进历史与各阶段说明详见：[更新日志 (CHANGELOG.md)](CHANGELOG.md)。
+
+- **当前版本**：`v2.0.0`（模块化工程重构与资源分离）
+- 历史版本：`v1.1.0`（品牌确立与双层安全）、`v1.0.0`（双向语音发布）、`v0.1.0`（原型验证）
+
 ## 技术文档
 
-部署、访问密码、密钥配置、API 参数和本地开发说明已移至独立文档：[技术与部署指南](docs/technical-guide.md)。
-
-第一次使用网页、在 OpenAI TTS 兼容客户端中配置地址，或不确定“网页密码”和“API Key”区别时，请阅读：[普通用户指南](docs/user-guide.md)。
+- 部署、访问密码、密钥配置、API 参数和本地开发说明请见：[技术与部署指南](docs/technical-guide.md)。
+- 第一次使用网页、在 OpenAI TTS 兼容客户端中配置地址，或不确定“网页密码”和“API Key”区别时，请阅读：[普通用户指南](docs/user-guide.md)。
 
 ## 许可证
 
