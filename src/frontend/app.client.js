@@ -275,6 +275,7 @@ let selectedFile = null;
             initializeTokenConfig();
             initializeVoicePreview();
             initializeVoiceCopy();
+            initializeSecurityBanner();
             document.getElementById('apiBaseDisplay').value = window.location.origin + '/v1';
         });
 
@@ -695,18 +696,97 @@ let selectedFile = null;
             });
         }
 
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text).catch(() => fallbackCopyText(text));
+            }
+            return fallbackCopyText(text);
+        }
+
+        function fallbackCopyText(text) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.left = '-999999px';
+                    textarea.style.top = '-999999px';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    const successful = document.execCommand('copy');
+                    textarea.remove();
+                    if (successful) resolve();
+                    else reject(new Error('execCommand failed'));
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
         function initializeVoiceCopy() {
-            const copyBtn = document.getElementById('copyVoiceBtn');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', function() {
-                    const voice = document.getElementById('voice').value;
-                    navigator.clipboard.writeText(voice).then(() => {
-                        const originalHtml = this.innerHTML;
-                        this.innerHTML = '✅';
-                        setTimeout(() => this.innerHTML = originalHtml, 2000);
-                    });
+            function handleVoiceCopy(btnElement, textElement) {
+                const voiceSelect = document.getElementById('voice');
+                const voice = voiceSelect ? voiceSelect.value : '';
+                if (!voice) return;
+
+                copyTextToClipboard(voice).then(() => {
+                    if (textElement) {
+                        const originalText = textElement.textContent;
+                        textElement.textContent = '已复制！';
+                        setTimeout(() => { textElement.textContent = originalText; }, 2000);
+                    }
+                    const previewStatus = document.getElementById('previewStatus');
+                    if (previewStatus) {
+                        previewStatus.textContent = '✅ 已复制音色名：' + voice;
+                        setTimeout(() => {
+                            if (previewStatus.textContent.includes(voice)) {
+                                previewStatus.textContent = '使用固定示例，不会影响当前文本';
+                            }
+                        }, 3500);
+                    }
+                }).catch(() => {
+                    alert('复制失败，请手动记录当前音色名：' + voice);
                 });
             }
+
+            const copyVoiceBtn = document.getElementById('copyVoiceBtn');
+            if (copyVoiceBtn) {
+                copyVoiceBtn.addEventListener('click', function() {
+                    handleVoiceCopy(this, document.getElementById('copyVoiceBtnText'));
+                });
+            }
+
+            const copyVoiceSelectBtn = document.getElementById('copyVoiceSelectBtn');
+            if (copyVoiceSelectBtn) {
+                copyVoiceSelectBtn.addEventListener('click', function() {
+                    handleVoiceCopy(this, document.getElementById('copyVoiceSelectText'));
+                });
+            }
+        }
+
+        function initializeSecurityBanner() {
+            const banner = document.getElementById('noPasswordBanner');
+            if (!banner) return;
+            const hasPassword = banner.getAttribute('data-has-password') === 'true';
+            const isDismissed = localStorage.getItem('cf_voice_no_password_dismissed') === 'true';
+
+            if (!hasPassword && !isDismissed) {
+                banner.style.display = 'block';
+            }
+
+            const dismissBtns = [
+                document.getElementById('dismissPasswordBannerBtn'),
+                document.getElementById('dismissPasswordBannerBtn2')
+            ];
+            dismissBtns.forEach(btn => {
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        banner.style.display = 'none';
+                        localStorage.setItem('cf_voice_no_password_dismissed', 'true');
+                    });
+                }
+            });
         }
 
         function initializeVoicePreview() {
@@ -857,3 +937,4 @@ let selectedFile = null;
             document.documentElement.lang = 'zh-CN';
             document.title = 'CF-voice · 中文语音工具';
         }
+

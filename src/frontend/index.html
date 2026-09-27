@@ -48,6 +48,32 @@
             </button>
             </div>
         </div>
+        
+        <!-- 未设置访问密码时的首次访问提醒 -->
+        <div class="security-banner" id="noPasswordBanner" style="display: none;" data-has-password="{{HAS_ACCESS_PASSWORD}}">
+            <div class="security-banner-header">
+                <div class="security-banner-title">
+                    <span class="security-banner-icon">🛡️</span>
+                    <strong>安全提示：当前未设置网页访问密码</strong>
+                    <span class="security-badge">建议配置</span>
+                </div>
+                <button type="button" class="security-banner-close" id="dismissPasswordBannerBtn" title="关闭提示（不再显示）">✕</button>
+            </div>
+            <div class="security-banner-content">
+                <p class="security-banner-desc">当前 Worker 网页可直接公开访问。若您希望保护额度并限制他人随意调用，建议在 Cloudflare 后台设置访问密码：</p>
+                <div class="security-steps">
+                    <div class="security-step"><span class="step-num">1</span> 登录 <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare 控制台 ↗</a>，进入 <strong>Compute (Workers & Pages)</strong> 并点击您的 Worker 项目</div>
+                    <div class="security-step"><span class="step-num">2</span> 点击 <strong>Settings (设置)</strong> ➔ <strong>Variables and Secrets (变量与机密)</strong></div>
+                    <div class="security-step"><span class="step-num">3</span> 在 <strong>Secrets</strong> 处点击 <strong>Add (添加)</strong>，变量名填 <code>ACCESS_PASSWORD</code>，值为您的自定义密码</div>
+                    <div class="security-step"><span class="step-num">4</span> 点击 <strong>Deploy (部署)</strong> 保存。再次刷新网页即可开启密码验证保护</div>
+                </div>
+            </div>
+            <div class="security-banner-footer">
+                <button type="button" class="btn-outline-sm" id="dismissPasswordBannerBtn2">我知道了，不再提示</button>
+                <a href="https://github.com/vimbackground/CF-voice/blob/master/docs/technical-guide.md#secrets-%E4%B8%8E%E7%BD%91%E9%A1%B5%E8%AE%BF%E9%97%AE%E5%AF%86%E7%A0%81" target="_blank" rel="noopener noreferrer" class="help-link">查看详细配置指南 ↗</a>
+            </div>
+        </div>
+
         <div class="remote-container" id="remoteContainer" style="display: none;">
             <div class="form-container" id="remoteFormContainer">
                 <p class="settings-help">当前版本：<code>v{{APP_VERSION}}</code> · 在此查看 OpenTTS / OpenAI 兼容调用地址、输出格式、API Key 和可复制音色名称。<a href="https://github.com/vimbackground/CF-voice/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="help-link">更新日志 ↗</a></p>
@@ -119,7 +145,12 @@
                     </div>
                     <div class="controls-grid">
                         <div class="form-group" id="voiceControl">
-                            <label class="form-label" for="voice">语音选择</label>
+                            <div class="voice-label-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" for="voice" style="margin-bottom: 0;">语音选择</label>
+                                <button type="button" class="copy-voice-link-btn" id="copyVoiceSelectBtn" title="点击复制当前选中的音色代码（用于客户端配置）">
+                                    <span>📋</span><span id="copyVoiceSelectText">复制音色名</span>
+                                </button>
+                            </div>
                             <select class="form-select" id="voice">
                                 <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声·温柔)</option>
                                 <option value="zh-CN-YunxiNeural">云希 (男声·清朗)</option>
@@ -188,6 +219,9 @@
 
                     <div class="utility-row">
                         <button type="button" class="btn-outline" id="previewVoiceBtn">▶ 试听当前音色</button>
+                        <button type="button" class="btn-outline" id="copyVoiceBtn" title="复制当前选中的音色代码">
+                            <span>📋</span><span id="copyVoiceBtnText">复制当前音色名</span>
+                        </button>
                         <span class="settings-help" id="previewStatus">使用固定示例，不会影响当前文本</span>
                     </div>
 
@@ -332,4 +366,6 @@
     <script src="/app.client.js"></script>
 </body>
 </html>
+
+
 

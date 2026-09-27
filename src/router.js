@@ -58,7 +58,10 @@ export async function handleRequest(request, env = {}) {
                 headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } 
             });
         }
-        const renderedHtml = HTML_PAGE.replaceAll('{{APP_VERSION}}', APP_VERSION);
+        const hasAccessPassword = Boolean(env.ACCESS_PASSWORD);
+        const renderedHtml = HTML_PAGE
+            .replaceAll('{{APP_VERSION}}', APP_VERSION)
+            .replaceAll('{{HAS_ACCESS_PASSWORD}}', String(hasAccessPassword));
         return new Response(renderedHtml, {
             headers: {
                 "Content-Type": "text/html; charset=utf-8",
