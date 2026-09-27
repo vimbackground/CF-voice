@@ -4,6 +4,12 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## [v2.3.2] - 2026-09-27
+
+### 🐛 缺陷修复与结构优化 (Bug Fixes & Refactoring)
+- **增加前端静态资源缓存控制 (Cache Busting)**：
+  - 修复因静态文件强缓存（`max-age=86400`）导致版本更新后，用户端仍加载带有语法错误的旧版 `app.client.js` 的问题，确保新修复的前端脚本（如“在线听书”按钮点击无效的修复）能立即在用户端生效。
+
 ## [v2.3.1] - 2026-09-27
 
 ### 🐛 缺陷修复与结构优化 (Bug Fixes & Refactoring)
