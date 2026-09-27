@@ -38,7 +38,14 @@
                 </span>
                 <span>语音转文字</span>
             </button>
-            <button type="button" class="mode-btn" id="remoteMode"><span>远程调用</span></button>
+            <button type="button" class="mode-btn" id="remoteMode">
+                <span class="mode-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 8h-2V6c0-1.1-.9-2-2-2H9C7.9 4 7 4.9 7 6v2H5c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm-4 0H9V6h6v2z"/>
+                    </svg>
+                </span>
+                <span>远程调用</span>
+            </button>
             </div>
         </div>
         <div class="remote-container" id="remoteContainer" style="display: none;">
@@ -325,3 +332,4 @@
     <script src="/app.client.js"></script>
 </body>
 </html>
+

@@ -274,6 +274,7 @@ let selectedFile = null;
             initializeAudioUpload();
             initializeTokenConfig();
             initializeVoicePreview();
+            initializeVoiceCopy();
             document.getElementById('apiBaseDisplay').value = window.location.origin + '/v1';
         });
 
@@ -692,6 +693,20 @@ let selectedFile = null;
                 document.querySelectorAll('.stt-custom-field').forEach(el => el.style.display = this.value === 'openai-compatible' ? 'block' : 'none');
                 document.getElementById('sttModel').value = this.value === 'siliconflow' ? 'FunAudioLLM/SenseVoiceSmall' : 'whisper-1';
             });
+        }
+
+        function initializeVoiceCopy() {
+            const copyBtn = document.getElementById('copyVoiceBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const voice = document.getElementById('voice').value;
+                    navigator.clipboard.writeText(voice).then(() => {
+                        const originalHtml = this.innerHTML;
+                        this.innerHTML = '✅';
+                        setTimeout(() => this.innerHTML = originalHtml, 2000);
+                    });
+                });
+            }
         }
 
         function initializeVoicePreview() {
