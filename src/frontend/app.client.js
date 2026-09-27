@@ -270,7 +270,6 @@ let selectedFile = null;
             initializeVoiceFilters();
             initializeFileUpload();
             initializeModeSwitcher();
-            initializeRemotePanel();
             initializeAudioUpload();
             initializeTokenConfig();
             initializeVoicePreview();
@@ -623,11 +622,6 @@ let selectedFile = null;
             transcriptionMode.addEventListener('click', function() { switchMode('transcription'); });
             remoteMode.addEventListener('click', function() { switchMode('remote'); });
             if(audiobookMode) audiobookMode.addEventListener('click', function() { switchMode('audiobook'); });
-        }
-
-        function initializeRemotePanel() {
-            const settings = document.getElementById('openTtsSettings');
-            document.getElementById('remoteFormContainer').appendChild(settings);
         }
 
         // 切换功能模式
@@ -1031,7 +1025,7 @@ let selectedFile = null;
     function stripMarkdown(text) {
         return text
             .replace(/!\[.*?\]\(.*?\)/g, '') // images
-            .replace(/\[(.*?)\]\(.*?\)/g, '\') // links
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
             .replace(/[#*_>~]/g, '') // markdown symbols
             .replace(/---|===/g, '') // hr
             .trim();
@@ -1075,13 +1069,13 @@ let selectedFile = null;
         document.querySelectorAll('.ab-reader-view .sentence').forEach(el => {
             el.classList.remove('active');
         });
-        const activeSpan = document.querySelector(.ab-reader-view .sentence[data-index="\"]);
+        const activeSpan = document.querySelector(`.ab-reader-view .sentence[data-index="${abCurrentIndex}"]`);
         if (activeSpan) {
             activeSpan.classList.add('active');
             activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         
-        progressText.innerText = \ / \;
+        progressText.innerText = `${abCurrentIndex + 1} / ${abChunks.length}`;
         progressBar.max = abChunks.length - 1;
         progressBar.value = abCurrentIndex;
 

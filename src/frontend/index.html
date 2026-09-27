@@ -85,6 +85,21 @@
         <div class="remote-container" id="remoteContainer" style="display: none;">
             <div class="form-container" id="remoteFormContainer">
                 <p class="settings-help">当前版本：<code>v{{APP_VERSION}}</code> · 在此查看 OpenTTS / OpenAI 兼容调用地址、输出格式、API Key 和可复制音色名称。<a href="https://github.com/vimbackground/CF-voice/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" class="help-link">更新日志 ↗</a></p>
+                <section class="settings-panel" id="openTtsSettings" style="margin-top: 1rem;">
+                    <div class="form-label">OpenTTS / OpenAI 兼容设置</div>
+                    <p class="settings-help">接口地址：<code>/v1/audio/speech</code>。支持 OpenAI 的 input、model、voice、response_format、speed；扩展参数为 pitch、volume、style。</p>
+                    <div class="controls-grid">
+                        <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
+                    </div>
+                    <div class="voice-table-wrap">
+                        <table class="voice-table"><thead><tr><th>普通话女声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                            <tr><td>晓晓</td><td><code>zh-CN-XiaoxiaoNeural</code></td><td>通用、文章朗读</td></tr><tr><td>晓伊</td><td><code>zh-CN-XiaoyiNeural</code></td><td>轻松、儿童内容</td></tr><tr><td>晓辰</td><td><code>zh-CN-XiaochenNeural</code></td><td>课程、知识讲解</td></tr><tr><td>晓涵</td><td><code>zh-CN-XiaohanNeural</code></td><td>品牌、正式朗读</td></tr><tr><td>晓梦</td><td><code>zh-CN-XiaomengNeural</code></td><td>故事、情感内容</td></tr><tr><td>晓墨</td><td><code>zh-CN-XiaomoNeural</code></td><td>散文、文化内容</td></tr><tr><td>晓秋</td><td><code>zh-CN-XiaoqiuNeural</code></td><td>访谈、说明内容</td></tr><tr><td>晓睿</td><td><code>zh-CN-XiaoruiNeural</code></td><td>问答、产品讲解</td></tr><tr><td>晓双</td><td><code>zh-CN-XiaoshuangNeural</code></td><td>短视频、活动播报</td></tr><tr><td>晓萱</td><td><code>zh-CN-XiaoxuanNeural</code></td><td>生活方式内容</td></tr><tr><td>晓颜</td><td><code>zh-CN-XiaoyanNeural</code></td><td>舒缓、情感文案</td></tr><tr><td>晓悠</td><td><code>zh-CN-XiaoyouNeural</code></td><td>长文、故事内容</td></tr><tr><td>晓甄</td><td><code>zh-CN-XiaozhenNeural</code></td><td>公告、商务介绍</td></tr>
+                        </tbody></table>
+                        <table class="voice-table"><thead><tr><th>普通话男声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                            <tr><td>云希</td><td><code>zh-CN-YunxiNeural</code></td><td>通用、日常讲解</td></tr><tr><td>云扬</td><td><code>zh-CN-YunyangNeural</code></td><td>短视频、活动内容</td></tr><tr><td>云健</td><td><code>zh-CN-YunjianNeural</code></td><td>课程、企业内容</td></tr><tr><td>云枫</td><td><code>zh-CN-YunfengNeural</code></td><td>故事、纪录片旁白</td></tr><tr><td>云皓</td><td><code>zh-CN-YunhaoNeural</code></td><td>宣传、激励文案</td></tr><tr><td>云夏</td><td><code>zh-CN-YunxiaNeural</code></td><td>客服、活动播报</td></tr><tr><td>云野</td><td><code>zh-CN-YunyeNeural</code></td><td>创意、潮流内容</td></tr><tr><td>云泽</td><td><code>zh-CN-YunzeNeural</code></td><td>新闻、正式介绍</td></tr>
+                        </tbody></table>
+                    </div>
+                </section>
             </div>
         </div>
         
@@ -282,21 +297,11 @@
                         <span class="settings-help" id="previewStatus">使用固定示例，不会影响当前文本</span>
                     </div>
 
-                    <section class="settings-panel" id="openTtsSettings">
-                        <div class="form-label">OpenTTS / OpenAI 兼容设置</div>
-                        <p class="settings-help">接口地址：<code>/v1/audio/speech</code>。支持 OpenAI 的 input、model、voice、response_format、speed；扩展参数为 pitch、volume、style。</p>
+                    <section class="settings-panel" id="advancedTtsSettings">
+                        <div class="form-label">高级设置</div>
                         <div class="controls-grid">
-                            <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
                             <div class="form-group"><label class="form-label" for="responseFormat">输出格式</label><select class="form-select" id="responseFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="opus">Opus</option><option value="pcm">PCM</option></select></div>
                             <div class="form-group"><label class="form-label" for="apiKeyInput">CF-voice API Key（可选）</label><input class="form-input" id="apiKeyInput" type="password" autocomplete="off" placeholder="部署者启用 API 保护时填写"></div>
-                        </div>
-                        <div class="voice-table-wrap">
-                            <table class="voice-table"><thead><tr><th>普通话女声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
-                                <tr><td>晓晓</td><td><code>zh-CN-XiaoxiaoNeural</code></td><td>通用、文章朗读</td></tr><tr><td>晓伊</td><td><code>zh-CN-XiaoyiNeural</code></td><td>轻松、儿童内容</td></tr><tr><td>晓辰</td><td><code>zh-CN-XiaochenNeural</code></td><td>课程、知识讲解</td></tr><tr><td>晓涵</td><td><code>zh-CN-XiaohanNeural</code></td><td>品牌、正式朗读</td></tr><tr><td>晓梦</td><td><code>zh-CN-XiaomengNeural</code></td><td>故事、情感内容</td></tr><tr><td>晓墨</td><td><code>zh-CN-XiaomoNeural</code></td><td>散文、文化内容</td></tr><tr><td>晓秋</td><td><code>zh-CN-XiaoqiuNeural</code></td><td>访谈、说明内容</td></tr><tr><td>晓睿</td><td><code>zh-CN-XiaoruiNeural</code></td><td>问答、产品讲解</td></tr><tr><td>晓双</td><td><code>zh-CN-XiaoshuangNeural</code></td><td>短视频、活动播报</td></tr><tr><td>晓萱</td><td><code>zh-CN-XiaoxuanNeural</code></td><td>生活方式内容</td></tr><tr><td>晓颜</td><td><code>zh-CN-XiaoyanNeural</code></td><td>舒缓、情感文案</td></tr><tr><td>晓悠</td><td><code>zh-CN-XiaoyouNeural</code></td><td>长文、故事内容</td></tr><tr><td>晓甄</td><td><code>zh-CN-XiaozhenNeural</code></td><td>公告、商务介绍</td></tr>
-                            </tbody></table>
-                            <table class="voice-table"><thead><tr><th>普通话男声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
-                                <tr><td>云希</td><td><code>zh-CN-YunxiNeural</code></td><td>通用、日常讲解</td></tr><tr><td>云扬</td><td><code>zh-CN-YunyangNeural</code></td><td>短视频、活动内容</td></tr><tr><td>云健</td><td><code>zh-CN-YunjianNeural</code></td><td>课程、企业内容</td></tr><tr><td>云枫</td><td><code>zh-CN-YunfengNeural</code></td><td>故事、纪录片旁白</td></tr><tr><td>云皓</td><td><code>zh-CN-YunhaoNeural</code></td><td>宣传、激励文案</td></tr><tr><td>云夏</td><td><code>zh-CN-YunxiaNeural</code></td><td>客服、活动播报</td></tr><tr><td>云野</td><td><code>zh-CN-YunyeNeural</code></td><td>创意、潮流内容</td></tr><tr><td>云泽</td><td><code>zh-CN-YunzeNeural</code></td><td>新闻、正式介绍</td></tr>
-                            </tbody></table>
                         </div>
                     </section>
                     

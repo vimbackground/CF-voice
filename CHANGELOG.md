@@ -4,6 +4,15 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## [v2.3.1] - 2026-09-27
+
+### 🐛 缺陷修复与结构优化 (Bug Fixes & Refactoring)
+- **修复顶端模式切换按钮失效问题**：
+  - 修复前端 `app.client.js` 听书模块中的模板字符串与正则语法解析错误，恢复全站脚本与按键监听。
+- **解耦远程调用与本地高级设置**：
+  - 废弃通过 JS 动态迁移 DOM 的过时逻辑，防止表单控件丢失与混乱。
+  - 拆分设置面板：本地 TTS 保留“高级设置”（输出格式与 API Key），远程调用页面独立静态展示 OpenTTS / OpenAI 兼容接口规范及音色表。
+
 ## [v2.3.0] - 2026-09-27
 
 ### ✨ 新功能与体验增强 (Features & Enhancements)
