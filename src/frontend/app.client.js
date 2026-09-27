@@ -1017,6 +1017,8 @@ let selectedFile = null;
     const progressBar = document.getElementById('abProgressBar');
     const playPauseBtn = document.getElementById('abPlayPauseBtn');
     const voiceSelect = document.getElementById('abVoiceSelect');
+    const pitchSelect = document.getElementById('abPitchSelect');
+    const speedSelect = document.getElementById('abSpeedSelect');
     const loadTextBtn = document.getElementById('abLoadTextBtn');
     
     if(!setupArea) return;
@@ -1027,8 +1029,7 @@ let selectedFile = null;
             .replace(/!\[.*?\]\(.*?\)/g, '') // images
             .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
             .replace(/[#*_>~]/g, '') // markdown symbols
-            .replace(/---|===/g, '') // hr
-            .trim();
+            .replace(/---|===/g, ''); // hr
     }
 
     // Split text into chunks for TTS (avoid too long sentences)
@@ -1040,14 +1041,14 @@ let selectedFile = null;
         for (let i = 0; i < sentences.length; i++) {
             const part = sentences[i];
             if (part.match(/^[。！？\n]+$/)) {
-                if(temp) temp += part;
+                temp += part;
             } else {
-                if (temp) chunks.push(temp.trim());
+                if (temp) chunks.push(temp);
                 temp = part;
             }
         }
-        if (temp) chunks.push(temp.trim());
-        return chunks.filter(c => c.length > 0);
+        if (temp) chunks.push(temp);
+        return chunks;
     }
 
     function renderReaderView() {
@@ -1060,8 +1061,6 @@ let selectedFile = null;
             span.addEventListener('click', () => jumpTo(index));
             
             readerView.appendChild(span);
-            // Append a space for visual separation
-            readerView.appendChild(document.createTextNode(' '));
         });
     }
 
@@ -1092,7 +1091,7 @@ let selectedFile = null;
     let preloadedBlobUrl = null;
     let currentVoice = '';
 
-    async function fetchTTSBlob(text, voice) {
+    async function fetchTTSBlob(text, voice, speed, pitch) {
         // Need to pass password if it exists
         const headers = {};
         const pwd = localStorage.getItem('access_password');
@@ -1103,10 +1102,10 @@ let selectedFile = null;
             method: 'POST',
             headers: headers,
             body: JSON.stringify({
-                input: text,
+                input: text.trim(),
                 voice: voice,
-                speed: 1.0,
-                pitch: 'default',
+                speed: speed,
+                pitch: pitch,
                 style: 'general'
             })
         });
@@ -1127,6 +1126,14 @@ let selectedFile = null;
         updateHighlight();
         const chunk = abChunks[abCurrentIndex];
         const voice = voiceSelect.value;
+        const speed = speedSelect ? speedSelect.value : 1.0;
+        const pitch = pitchSelect ? pitchSelect.value : '0';
+        
+        const cleanText = chunk.trim();
+        if (!cleanText) {
+            abCurrentIndex++;
+            return playCurrent();
+        }
         
         try {
             if(nextChunkLoaded && preloadedBlobUrl && currentVoice === voice) {
@@ -1134,7 +1141,7 @@ let selectedFile = null;
             } else {
                 if(abAudio.src) URL.revokeObjectURL(abAudio.src);
                 playPauseBtn.innerHTML = '<span class="ab-icon">⏳</span>缓冲';
-                const blobUrl = await fetchTTSBlob(chunk, voice);
+                const blobUrl = await fetchTTSBlob(chunk, voice, speed, pitch);
                 abAudio.src = blobUrl;
                 currentVoice = voice;
             }
@@ -1146,10 +1153,16 @@ let selectedFile = null;
             // Pre-fetch next
             if (abCurrentIndex + 1 < abChunks.length) {
                 nextChunkLoaded = false;
-                fetchTTSBlob(abChunks[abCurrentIndex + 1], voice).then(url => {
-                    preloadedBlobUrl = url;
-                    nextChunkLoaded = true;
-                }).catch(e => console.error(e));
+                let nextIndex = abCurrentIndex + 1;
+                while (nextIndex < abChunks.length && !abChunks[nextIndex].trim()) {
+                    nextIndex++;
+                }
+                if (nextIndex < abChunks.length) {
+                    fetchTTSBlob(abChunks[nextIndex], voice, speed, pitch).then(url => {
+                        preloadedBlobUrl = url;
+                        nextChunkLoaded = true;
+                    }).catch(e => console.error(e));
+                }
             } else {
                 nextChunkLoaded = false;
                 preloadedBlobUrl = null;
@@ -1197,6 +1210,24 @@ let selectedFile = null;
             jumpTo(abCurrentIndex); // replay current with new voice
         }
     });
+    
+    if (pitchSelect) {
+        pitchSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                nextChunkLoaded = false;
+                jumpTo(abCurrentIndex);
+            }
+        });
+    }
+
+    if (speedSelect) {
+        speedSelect.addEventListener('change', () => {
+            if (isPlaying) {
+                nextChunkLoaded = false;
+                jumpTo(abCurrentIndex);
+            }
+        });
+    }
 
     startBtn.addEventListener('click', () => {
         const text = inputText.value.trim();

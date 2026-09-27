@@ -2,7 +2,7 @@
 
 CF-voice 是一个部署在 Cloudflare Workers 上的轻量语音工具：在浏览器中将文字转为语音，或将音频转为文本。无需安装客户端，打开网页即可使用。
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/vimbackground/CF-voice)
 
@@ -43,8 +43,8 @@ CF-voice 是一个部署在 Cloudflare Workers 上的轻量语音工具：在浏
 
 本项目遵循语义化版本规范，完整的版本演进历史与各阶段说明详见：[更新日志 (CHANGELOG.md)](CHANGELOG.md)。
 
-- **当前版本**：`v2.1.0`（音色便捷复制与多端界面平滑交互体验优化）
-- 历史版本：`v2.0.0`（模块化工程重构与资源分离）、`v1.1.0`（品牌确立与双层安全）、`v1.0.0`（双向语音发布）、`v0.1.0`（原型验证）
+- **当前版本**：`v2.4.0`（在线听书深度优化：丰富音调语速、原文段落保真、控制栏置顶）
+- 历史版本：`v2.3.0`（在线听书初始版）、`v2.2.0`（流式播放）、`v2.1.0`（便捷复制与交互优化）、`v2.0.0`（模块化工程重构）
 
 ## 技术文档
 

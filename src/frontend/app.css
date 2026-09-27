@@ -964,7 +964,7 @@
     margin: 0;
     color: var(--text-primary);
 }
-.ab-reader-view {
+.ab-reader-view { white-space: pre-wrap;
     height: 50vh;
     overflow-y: auto;
     padding: 20px;

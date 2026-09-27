@@ -123,30 +123,60 @@
                 </div>
 
                 <div class="audiobook-player" id="abPlayerArea" style="display: none;">
-                    <div class="ab-reader-view" id="abReaderView">
-                        <!-- 段落内容会在这里动态渲染 -->
-                    </div>
-                    
-                    <div class="ab-control-bar">
-                        <div class="ab-progress-container">
-                            <span class="ab-time" id="abProgressText">0 / 0</span>
-                            <input type="range" class="ab-slider" id="abProgressBar" min="0" max="100" value="0">
-                        </div>
-                        <div class="ab-controls-row">
-                            <button type="button" class="ab-btn" id="abPlayPauseBtn">
+                    <div class="ab-control-bar" style="margin-bottom: 20px;">
+                        <div class="ab-controls-row" style="flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                            <button type="button" class="ab-btn" id="abPlayPauseBtn" style="flex-shrink: 0;">
                                 <span class="ab-icon">▶</span>
                                 播放
                             </button>
-                            <div class="ab-settings">
+                            <div class="ab-settings" style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <select class="form-select ab-voice-select" id="abVoiceSelect">
                                     <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声·温柔)</option>
                                     <option value="zh-CN-YunxiNeural">云希 (男声·清朗)</option>
                                     <option value="zh-CN-YunyangNeural">云扬 (男声·阳光)</option>
                                     <option value="zh-CN-XiaoyiNeural">晓伊 (女声·甜美)</option>
                                     <option value="zh-CN-YunjianNeural">云健 (男声·稳重)</option>
+                                    <option value="zh-CN-XiaochenNeural">晓辰 (女声·知性)</option>
+                                    <option value="zh-CN-XiaohanNeural">晓涵 (女声·优雅)</option>
+                                    <option value="zh-CN-XiaomengNeural">晓梦 (女声·梦幻)</option>
+                                    <option value="zh-CN-XiaomoNeural">晓墨 (女声·文艺)</option>
+                                    <option value="zh-CN-XiaoqiuNeural">晓秋 (女声·成熟)</option>
+                                    <option value="zh-CN-XiaoruiNeural">晓睿 (女声·智慧)</option>
+                                    <option value="zh-CN-XiaoshuangNeural">晓双 (女声·活泼)</option>
+                                    <option value="zh-CN-XiaoxuanNeural">晓萱 (女声·清新)</option>
+                                    <option value="zh-CN-XiaoyanNeural">晓颜 (女声·柔美)</option>
+                                    <option value="zh-CN-XiaoyouNeural">晓悠 (女声·悠扬)</option>
+                                    <option value="zh-CN-XiaozhenNeural">晓甄 (女声·端庄)</option>
+                                    <option value="zh-CN-YunfengNeural">云枫 (男声·磁性)</option>
+                                    <option value="zh-CN-YunhaoNeural">云皓 (男声·豪迈)</option>
+                                    <option value="zh-CN-YunxiaNeural">云夏 (男声·热情)</option>
+                                    <option value="zh-CN-YunyeNeural">云野 (男声·野性)</option>
+                                    <option value="zh-CN-YunzeNeural">云泽 (男声·深沉)</option>
+                                </select>
+                                <select class="form-select ab-voice-select" id="abPitchSelect">
+                                    <option value="-50">📉 很低沉</option>
+                                    <option value="-25">📊 低沉</option>
+                                    <option value="0" selected>🎵 标准音调</option>
+                                    <option value="25">📈 高亢</option>
+                                    <option value="50">🎶 很高亢</option>
+                                </select>
+                                <select class="form-select ab-voice-select" id="abSpeedSelect">
+                                    <option value="0.75">🚶 0.75x</option>
+                                    <option value="1.0" selected>⚡ 1.0x (正常)</option>
+                                    <option value="1.25">🏃 1.25x</option>
+                                    <option value="1.5">🚀 1.5x</option>
+                                    <option value="2.0">💨 2.0x</option>
                                 </select>
                             </div>
                         </div>
+                        <div class="ab-progress-container">
+                            <span class="ab-time" id="abProgressText">0 / 0</span>
+                            <input type="range" class="ab-slider" id="abProgressBar" min="0" max="100" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="ab-reader-view" id="abReaderView">
+                        <!-- 段落内容会在这里动态渲染 -->
                     </div>
                 </div>
             </div>
