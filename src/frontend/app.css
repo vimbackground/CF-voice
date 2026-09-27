@@ -951,3 +951,100 @@
         }
 
 
+/* Audiobook Mode Styles */
+.audiobook-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+.audiobook-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+.ab-reader-view {
+    height: 50vh;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+.ab-reader-view p {
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.ab-reader-view p:hover {
+    background-color: var(--hover-bg);
+}
+.ab-reader-view span.sentence {
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+.ab-reader-view span.sentence:hover {
+    background-color: #dbeafe;
+}
+.ab-reader-view span.sentence.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+.ab-control-bar {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+.ab-progress-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+.ab-time {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+.ab-slider {
+    flex: 1;
+    cursor: pointer;
+}
+.ab-controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ab-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+.ab-btn:hover {
+    background: var(--primary-hover);
+}
+.ab-settings {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ab-voice-select {
+    min-width: 150px;
+}

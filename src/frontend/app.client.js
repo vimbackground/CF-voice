@@ -1005,3 +1005,274 @@ let selectedFile = null;
             document.title = 'CF-voice · 中文语音工具';
         }
 
+
+// ========== Audiobook Feature ==========
+(function() {
+    let abChunks = [];
+    let abCurrentIndex = 0;
+    let abAudio = new Audio();
+    let abNextAudio = new Audio();
+    let isPlaying = false;
+    let nextChunkLoaded = false;
+    
+    // UI Elements
+    const setupArea = document.getElementById('abSetupArea');
+    const playerArea = document.getElementById('abPlayerArea');
+    const inputText = document.getElementById('abInputText');
+    const fileInput = document.getElementById('abFileInput');
+    const uploadBtn = document.getElementById('abUploadBtn');
+    const startBtn = document.getElementById('abStartBtn');
+    const readerView = document.getElementById('abReaderView');
+    const progressText = document.getElementById('abProgressText');
+    const progressBar = document.getElementById('abProgressBar');
+    const playPauseBtn = document.getElementById('abPlayPauseBtn');
+    const voiceSelect = document.getElementById('abVoiceSelect');
+    const loadTextBtn = document.getElementById('abLoadTextBtn');
+    
+    if(!setupArea) return;
+
+    // Remove markdown symbols and format
+    function stripMarkdown(text) {
+        return text
+            .replace(/!\[.*?\]\(.*?\)/g, '') // images
+            .replace(/\[(.*?)\]\(.*?\)/g, '\') // links
+            .replace(/[#*_>~]/g, '') // markdown symbols
+            .replace(/---|===/g, '') // hr
+            .trim();
+    }
+
+    // Split text into chunks for TTS (avoid too long sentences)
+    function splitTextToChunks(text) {
+        const raw = stripMarkdown(text);
+        const sentences = raw.split(/([。！？\n]+)/); // Split keeping delimiters
+        const chunks = [];
+        let temp = '';
+        for (let i = 0; i < sentences.length; i++) {
+            const part = sentences[i];
+            if (part.match(/^[。！？\n]+$/)) {
+                if(temp) temp += part;
+            } else {
+                if (temp) chunks.push(temp.trim());
+                temp = part;
+            }
+        }
+        if (temp) chunks.push(temp.trim());
+        return chunks.filter(c => c.length > 0);
+    }
+
+    function renderReaderView() {
+        readerView.innerHTML = '';
+        abChunks.forEach((chunk, index) => {
+            const span = document.createElement('span');
+            span.className = 'sentence';
+            span.innerText = chunk;
+            span.dataset.index = index;
+            span.addEventListener('click', () => jumpTo(index));
+            
+            readerView.appendChild(span);
+            // Append a space for visual separation
+            readerView.appendChild(document.createTextNode(' '));
+        });
+    }
+
+    function updateHighlight() {
+        document.querySelectorAll('.ab-reader-view .sentence').forEach(el => {
+            el.classList.remove('active');
+        });
+        const activeSpan = document.querySelector(.ab-reader-view .sentence[data-index="\"]);
+        if (activeSpan) {
+            activeSpan.classList.add('active');
+            activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        progressText.innerText = \ / \;
+        progressBar.max = abChunks.length - 1;
+        progressBar.value = abCurrentIndex;
+
+        // Save progress
+        localStorage.setItem('audiobook_progress', abCurrentIndex);
+        
+        // Save text digest for verifying same book
+        if(abChunks.length > 0) {
+            const digest = abChunks[0].substring(0, 20);
+            localStorage.setItem('audiobook_digest', digest);
+        }
+    }
+
+    let preloadedBlobUrl = null;
+    let currentVoice = '';
+
+    async function fetchTTSBlob(text, voice) {
+        // Need to pass password if it exists
+        const headers = {};
+        const pwd = localStorage.getItem('access_password');
+        if (pwd) headers['Authorization'] = 'Bearer ' + pwd;
+        headers['Content-Type'] = 'application/json';
+
+        const res = await fetch('/v1/audio/speech', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                input: text,
+                voice: voice,
+                speed: 1.0,
+                pitch: 'default',
+                style: 'general'
+            })
+        });
+        if(!res.ok) {
+            throw new Error('TTS Request failed');
+        }
+        const blob = await res.blob();
+        return URL.createObjectURL(blob);
+    }
+
+    async function playCurrent() {
+        if(abCurrentIndex >= abChunks.length) {
+            isPlaying = false;
+            playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
+            return;
+        }
+
+        updateHighlight();
+        const chunk = abChunks[abCurrentIndex];
+        const voice = voiceSelect.value;
+        
+        try {
+            if(nextChunkLoaded && preloadedBlobUrl && currentVoice === voice) {
+                abAudio.src = preloadedBlobUrl;
+            } else {
+                if(abAudio.src) URL.revokeObjectURL(abAudio.src);
+                playPauseBtn.innerHTML = '<span class="ab-icon">⏳</span>缓冲';
+                const blobUrl = await fetchTTSBlob(chunk, voice);
+                abAudio.src = blobUrl;
+                currentVoice = voice;
+            }
+            
+            await abAudio.play();
+            isPlaying = true;
+            playPauseBtn.innerHTML = '<span class="ab-icon">⏸</span>暂停';
+            
+            // Pre-fetch next
+            if (abCurrentIndex + 1 < abChunks.length) {
+                nextChunkLoaded = false;
+                fetchTTSBlob(abChunks[abCurrentIndex + 1], voice).then(url => {
+                    preloadedBlobUrl = url;
+                    nextChunkLoaded = true;
+                }).catch(e => console.error(e));
+            } else {
+                nextChunkLoaded = false;
+                preloadedBlobUrl = null;
+            }
+        } catch(e) {
+            console.error('播放失败:', e);
+            playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
+            isPlaying = false;
+            alert('获取语音失败，请检查网络或授权码');
+        }
+    }
+
+    abAudio.onended = () => {
+        abCurrentIndex++;
+        playCurrent();
+    };
+
+    function jumpTo(index) {
+        abCurrentIndex = index;
+        nextChunkLoaded = false;
+        abAudio.pause();
+        playCurrent();
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if(isPlaying) {
+            abAudio.pause();
+            isPlaying = false;
+            playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
+        } else {
+            playCurrent();
+        }
+    });
+
+    progressBar.addEventListener('input', (e) => {
+        const index = parseInt(e.target.value);
+        if(index !== abCurrentIndex) {
+            jumpTo(index);
+        }
+    });
+    
+    voiceSelect.addEventListener('change', () => {
+        if (isPlaying) {
+            nextChunkLoaded = false; // invalidate cache
+            jumpTo(abCurrentIndex); // replay current with new voice
+        }
+    });
+
+    startBtn.addEventListener('click', () => {
+        const text = inputText.value.trim();
+        if(!text) {
+            alert('请输入或上传文本');
+            return;
+        }
+        
+        abChunks = splitTextToChunks(text);
+        if(abChunks.length === 0) return;
+        
+        setupArea.style.display = 'none';
+        playerArea.style.display = 'block';
+        
+        renderReaderView();
+        
+        // Restore progress if matching text
+        const savedDigest = localStorage.getItem('audiobook_digest');
+        const currentDigest = abChunks[0].substring(0, 20);
+        if(savedDigest === currentDigest) {
+            const savedIndex = parseInt(localStorage.getItem('audiobook_progress'));
+            if(!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < abChunks.length) {
+                abCurrentIndex = savedIndex;
+            } else {
+                abCurrentIndex = 0;
+            }
+        } else {
+            abCurrentIndex = 0;
+            localStorage.setItem('audiobook_fulltext', text);
+        }
+        
+        jumpTo(abCurrentIndex);
+    });
+
+    uploadBtn.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            inputText.value = e.target.result;
+        };
+        reader.readAsText(file);
+    });
+
+    loadTextBtn.addEventListener('click', () => {
+        abAudio.pause();
+        isPlaying = false;
+        playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
+        
+        setupArea.style.display = 'block';
+        playerArea.style.display = 'none';
+    });
+    
+    // Auto restore if previous text exists
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedText = localStorage.getItem('audiobook_fulltext');
+        if(savedText) {
+            inputText.value = savedText;
+        }
+    });
+
+})();
+// ========== End Audiobook Feature ==========
+
+

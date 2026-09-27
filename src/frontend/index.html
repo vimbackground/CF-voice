@@ -46,6 +46,14 @@
                 </span>
                 <span>远程调用</span>
             </button>
+            <button type="button" class="mode-btn" id="audiobookMode">
+                <span class="mode-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                </span>
+                <span>在线听书</span>
+            </button>
             </div>
         </div>
         
@@ -80,7 +88,56 @@
             </div>
         </div>
         
-        <div class="main-content">
+        <div class="audiobook-container" id="audiobookContainer" style="display: none;">
+            <div class="form-container">
+                <div class="audiobook-header">
+                    <h3>在线听书模式</h3>
+                    <div class="audiobook-actions">
+                        <button type="button" class="btn-outline-sm" id="abLoadTextBtn">加载新文本</button>
+                    </div>
+                </div>
+                
+                <div class="audiobook-setup" id="abSetupArea">
+                    <div class="form-group">
+                        <label class="form-label">粘贴文本或上传小说 (.txt, .md)</label>
+                        <textarea class="form-textarea" id="abInputText" placeholder="在此粘贴小说内容，或点击下方按钮上传文件..." style="min-height: 200px; margin-bottom: 10px;"></textarea>
+                        <input type="file" id="abFileInput" accept=".txt,.md" style="display: none;">
+                        <button type="button" class="btn-primary" id="abUploadBtn" style="margin-right: 10px;">选择文件</button>
+                        <button type="button" class="btn-primary" id="abStartBtn">开始听书</button>
+                    </div>
+                </div>
+
+                <div class="audiobook-player" id="abPlayerArea" style="display: none;">
+                    <div class="ab-reader-view" id="abReaderView">
+                        <!-- 段落内容会在这里动态渲染 -->
+                    </div>
+                    
+                    <div class="ab-control-bar">
+                        <div class="ab-progress-container">
+                            <span class="ab-time" id="abProgressText">0 / 0</span>
+                            <input type="range" class="ab-slider" id="abProgressBar" min="0" max="100" value="0">
+                        </div>
+                        <div class="ab-controls-row">
+                            <button type="button" class="ab-btn" id="abPlayPauseBtn">
+                                <span class="ab-icon">▶</span>
+                                播放
+                            </button>
+                            <div class="ab-settings">
+                                <select class="form-select ab-voice-select" id="abVoiceSelect">
+                                    <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声·温柔)</option>
+                                    <option value="zh-CN-YunxiNeural">云希 (男声·清朗)</option>
+                                    <option value="zh-CN-YunyangNeural">云扬 (男声·阳光)</option>
+                                    <option value="zh-CN-XiaoyiNeural">晓伊 (女声·甜美)</option>
+                                    <option value="zh-CN-YunjianNeural">云健 (男声·稳重)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content" id="ttsMainContent">
             <div class="form-container">
                 <form id="ttsForm">
                     <!-- 输入方式选择 -->
