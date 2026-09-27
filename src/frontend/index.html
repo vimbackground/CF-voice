@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page.title">CF-voice - AI-Powered Voice Processing Platform</title>
+    <meta name="description" content="" data-i18n-content="page.description">
+    <meta name="keywords" content="" data-i18n-content="page.keywords">
+    <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+    <div class="container">
+        <div class="app-bar">
+            <div class="brand-mark">CF-voice · 中文语音工具</div>
+            <div class="mode-switcher">
+            <button type="button" class="mode-btn active" id="ttsMode">
+                <span class="mode-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                    </svg>
+                </span>
+                <span>文字转语音</span>
+            </button>
+            <button type="button" class="mode-btn" id="transcriptionMode">
+                <span class="mode-icon">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 9m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/>
+                        <path d="M9 17v4"/>
+                        <path d="M12 13a3 3 0 0 0 3 -3"/>
+                        <path d="M15 9.5v-3a3 3 0 0 0 -3 -3h-1"/>
+                        <path d="M19 8v8"/>
+                        <path d="M17 9v6"/>
+                        <path d="M21 9v6"/>
+                    </svg>
+                </span>
+                <span>语音转文字</span>
+            </button>
+            <button type="button" class="mode-btn" id="remoteMode"><span>远程调用</span></button>
+            </div>
+        </div>
+        <div class="remote-container" id="remoteContainer" style="display: none;">
+            <div class="form-container" id="remoteFormContainer">
+                <p class="settings-help">在此查看 OpenTTS / OpenAI 兼容调用地址、输出格式、API Key 和可复制音色名称。</p>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-container">
+                <form id="ttsForm">
+                    <!-- 输入方式选择 -->
+                    <div class="form-group">
+                        <label class="form-label">选择输入方式</label>
+                        <div class="input-method-tabs">
+                            <button type="button" class="tab-btn active" id="textInputTab">
+                                <span class="tab-icon">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                    </svg>
+                                </span>
+                                <span>手动输入</span>
+                            </button>
+                            <button type="button" class="tab-btn" id="fileUploadTab">
+                                <span class="tab-icon">
+                                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                    </svg>
+                                </span>
+                                <span>上传文件</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 手动输入区域 -->
+                    <div class="form-group" id="textInputArea">
+                        <label class="form-label" for="text">输入文本</label>
+                        <textarea class="form-textarea" id="text" placeholder="请输入要转换为语音的文本内容，支持中文、英文、数字等..." required></textarea>
+                    </div>
+
+                    <!-- 文件上传区域 -->
+                    <div class="form-group" id="fileUploadArea" style="display: none;">
+                        <label class="form-label" for="fileInput">上传txt文件</label>
+                        <div class="file-upload-container">
+                            <div class="file-drop-zone" id="fileDropZone">
+                                <div class="file-drop-content">
+                                    <div class="file-drop-icon">
+                                        <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2L13.09 8.26L19 7L17.74 13.09L24 12L17.74 10.91L19 5L13.09 6.26L12 0L10.91 6.26L5 5L6.26 10.91L0 12L6.26 13.09L5 19L10.91 17.74L12 24L13.09 17.74L19 19L17.74 13.09L24 12Z"/>
+                                            <path d="M14 2H6A2 2 0 0 0 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2M18 20H6V4H13V9H18V20Z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="file-drop-text">拖拽txt文件到此处，或点击选择文件</p>
+                                    <p class="file-drop-hint">支持txt格式，最大500KB</p>
+                                </div>
+                                <input type="file" id="fileInput" accept=".txt,text/plain" style="display: none;">
+                            </div>
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-details">
+                                    <span class="file-name" id="fileName"></span>
+                                    <span class="file-size" id="fileSize"></span>
+                                </div>
+                                <button type="button" class="file-remove-btn" id="fileRemoveBtn">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="controls-grid voice-filter-grid">
+                        <div class="form-group"><label class="form-label" for="voiceGender">性别筛选</label><select class="form-select" id="voiceGender"><option value="all">全部</option><option value="female">女声</option><option value="male">男声</option></select></div>
+                        <div class="form-group"><label class="form-label" for="voiceScene">适用场景</label><select class="form-select" id="voiceScene"><option value="all">全部场景</option><option value="general">通用 / 讲解</option><option value="formal">正式 / 商务</option><option value="story">故事 / 情感</option><option value="shortvideo">短视频 / 活动</option></select></div>
+                    </div>
+                    <div class="controls-grid">
+                        <div class="form-group" id="voiceControl">
+                            <label class="form-label" for="voice">语音选择</label>
+                            <select class="form-select" id="voice">
+                                <option value="zh-CN-XiaoxiaoNeural">晓晓 (女声·温柔)</option>
+                                <option value="zh-CN-YunxiNeural">云希 (男声·清朗)</option>
+                                <option value="zh-CN-YunyangNeural">云扬 (男声·阳光)</option>
+                                <option value="zh-CN-XiaoyiNeural">晓伊 (女声·甜美)</option>
+                                <option value="zh-CN-YunjianNeural">云健 (男声·稳重)</option>
+                                <option value="zh-CN-XiaochenNeural">晓辰 (女声·知性)</option>
+                                <option value="zh-CN-XiaohanNeural">晓涵 (女声·优雅)</option>
+                                <option value="zh-CN-XiaomengNeural">晓梦 (女声·梦幻)</option>
+                                <option value="zh-CN-XiaomoNeural">晓墨 (女声·文艺)</option>
+                                <option value="zh-CN-XiaoqiuNeural">晓秋 (女声·成熟)</option>
+                                <option value="zh-CN-XiaoruiNeural">晓睿 (女声·智慧)</option>
+                                <option value="zh-CN-XiaoshuangNeural">晓双 (女声·活泼)</option>
+                                <option value="zh-CN-XiaoxuanNeural">晓萱 (女声·清新)</option>
+                                <option value="zh-CN-XiaoyanNeural">晓颜 (女声·柔美)</option>
+                                <option value="zh-CN-XiaoyouNeural">晓悠 (女声·悠扬)</option>
+                                <option value="zh-CN-XiaozhenNeural">晓甄 (女声·端庄)</option>
+                                <option value="zh-CN-YunfengNeural">云枫 (男声·磁性)</option>
+                                <option value="zh-CN-YunhaoNeural">云皓 (男声·豪迈)</option>
+                                <option value="zh-CN-YunxiaNeural">云夏 (男声·热情)</option>
+                                <option value="zh-CN-YunyeNeural">云野 (男声·野性)</option>
+                                <option value="zh-CN-YunzeNeural">云泽 (男声·深沉)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="speed">语速调节</label>
+                            <select class="form-select" id="speed">
+                                <option value="0.5">🐌 很慢</option>
+                                <option value="0.75">🚶 慢速</option>
+                                <option value="1.0" selected>⚡ 正常</option>
+                                <option value="1.25">🏃 快速</option>
+                                <option value="1.5">🚀 很快</option>
+                                <option value="2.0">💨 极速</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="pitch">音调高低</label>
+                            <select class="form-select" id="pitch">
+                                <option value="-50">📉 很低沉</option>
+                                <option value="-25">📊 低沉</option>
+                                <option value="0" selected>🎵 标准</option>
+                                <option value="25">📈 高亢</option>
+                                <option value="50">🎶 很高亢</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="style">语音风格</label>
+                            <select class="form-select" id="style">
+                                <option value="general" selected>🎭 通用风格</option>
+                                <option value="assistant">🤖 智能助手</option>
+                                <option value="chat">💬 聊天对话</option>
+                                <option value="customerservice">📞 客服专业</option>
+                                <option value="newscast">📺 新闻播报</option>
+                                <option value="affectionate">💕 亲切温暖</option>
+                                <option value="calm">😌 平静舒缓</option>
+                                <option value="cheerful">😊 愉快欢乐</option>
+                                <option value="gentle">🌸 温和柔美</option>
+                                <option value="lyrical">🎼 抒情诗意</option>
+                                <option value="serious">🎯 严肃正式</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="utility-row">
+                        <button type="button" class="btn-outline" id="previewVoiceBtn">▶ 试听当前音色</button>
+                        <span class="settings-help" id="previewStatus">使用固定示例，不会影响当前文本</span>
+                    </div>
+
+                    <section class="settings-panel" id="openTtsSettings">
+                        <div class="form-label">OpenTTS / OpenAI 兼容设置</div>
+                        <p class="settings-help">接口地址：<code>/v1/audio/speech</code>。支持 OpenAI 的 input、model、voice、response_format、speed；扩展参数为 pitch、volume、style。</p>
+                        <div class="controls-grid">
+                            <div class="form-group"><label class="form-label" for="apiBaseDisplay">API Base URL</label><input class="form-input" id="apiBaseDisplay" readonly></div>
+                            <div class="form-group"><label class="form-label" for="responseFormat">输出格式</label><select class="form-select" id="responseFormat"><option value="mp3">MP3</option><option value="wav">WAV</option><option value="opus">Opus</option><option value="pcm">PCM</option></select></div>
+                            <div class="form-group"><label class="form-label" for="apiKeyInput">CF-voice API Key（可选）</label><input class="form-input" id="apiKeyInput" type="password" autocomplete="off" placeholder="部署者启用 API 保护时填写"></div>
+                        </div>
+                        <div class="voice-table-wrap">
+                            <table class="voice-table"><thead><tr><th>普通话女声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                                <tr><td>晓晓</td><td><code>zh-CN-XiaoxiaoNeural</code></td><td>通用、文章朗读</td></tr><tr><td>晓伊</td><td><code>zh-CN-XiaoyiNeural</code></td><td>轻松、儿童内容</td></tr><tr><td>晓辰</td><td><code>zh-CN-XiaochenNeural</code></td><td>课程、知识讲解</td></tr><tr><td>晓涵</td><td><code>zh-CN-XiaohanNeural</code></td><td>品牌、正式朗读</td></tr><tr><td>晓梦</td><td><code>zh-CN-XiaomengNeural</code></td><td>故事、情感内容</td></tr><tr><td>晓墨</td><td><code>zh-CN-XiaomoNeural</code></td><td>散文、文化内容</td></tr><tr><td>晓秋</td><td><code>zh-CN-XiaoqiuNeural</code></td><td>访谈、说明内容</td></tr><tr><td>晓睿</td><td><code>zh-CN-XiaoruiNeural</code></td><td>问答、产品讲解</td></tr><tr><td>晓双</td><td><code>zh-CN-XiaoshuangNeural</code></td><td>短视频、活动播报</td></tr><tr><td>晓萱</td><td><code>zh-CN-XiaoxuanNeural</code></td><td>生活方式内容</td></tr><tr><td>晓颜</td><td><code>zh-CN-XiaoyanNeural</code></td><td>舒缓、情感文案</td></tr><tr><td>晓悠</td><td><code>zh-CN-XiaoyouNeural</code></td><td>长文、故事内容</td></tr><tr><td>晓甄</td><td><code>zh-CN-XiaozhenNeural</code></td><td>公告、商务介绍</td></tr>
+                            </tbody></table>
+                            <table class="voice-table"><thead><tr><th>普通话男声</th><th>可复制音色名称</th><th>推荐场景</th></tr></thead><tbody>
+                                <tr><td>云希</td><td><code>zh-CN-YunxiNeural</code></td><td>通用、日常讲解</td></tr><tr><td>云扬</td><td><code>zh-CN-YunyangNeural</code></td><td>短视频、活动内容</td></tr><tr><td>云健</td><td><code>zh-CN-YunjianNeural</code></td><td>课程、企业内容</td></tr><tr><td>云枫</td><td><code>zh-CN-YunfengNeural</code></td><td>故事、纪录片旁白</td></tr><tr><td>云皓</td><td><code>zh-CN-YunhaoNeural</code></td><td>宣传、激励文案</td></tr><tr><td>云夏</td><td><code>zh-CN-YunxiaNeural</code></td><td>客服、活动播报</td></tr><tr><td>云野</td><td><code>zh-CN-YunyeNeural</code></td><td>创意、潮流内容</td></tr><tr><td>云泽</td><td><code>zh-CN-YunzeNeural</code></td><td>新闻、正式介绍</td></tr>
+                            </tbody></table>
+                        </div>
+                    </section>
+                    
+                    <button type="submit" class="btn-primary" id="generateBtn">
+                        <span>🎙️</span>
+                        <span>开始生成语音</span>
+                    </button>
+            </form>
+            
+                <div id="result" class="result-container">
+                    <div id="loading" class="loading-container" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-text" id="loadingText">正在生成语音，请稍候...</p>
+                        <div class="progress-info" id="progressInfo" style="margin-top: 12px; font-size: 0.875rem; color: var(--text-secondary);"></div>
+                    </div>
+                    
+                    <div id="success" style="display: none;">
+                        <audio id="audioPlayer" class="audio-player" controls></audio>
+                        <a id="downloadBtn" class="btn-secondary" download="speech.mp3">
+                            <span>📥</span>
+                            <span>下载音频文件</span>
+                        </a>
+                    </div>
+                    
+                    <div id="error" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 语音转录界面 -->
+        <div class="transcription-container" id="transcriptionContainer" style="display: none;">
+            <div class="form-container">
+                <form id="transcriptionForm">
+                    <div class="form-group">
+                        <label class="form-label">上传音频文件</label>
+                        <div class="audio-upload-zone" id="audioDropZone">
+                            <div class="file-drop-content">
+                                <div class="file-drop-icon">
+                                    <svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                                        <path d="M14 2v6h6"/>
+                                        <path d="M12 18v-6"/>
+                                        <path d="M9 15l3-3 3 3"/>
+                                    </svg>
+                                </div>
+                                <p class="file-drop-text">拖拽音频文件到此处，或点击选择文件</p>
+                                <p class="file-drop-hint">支持mp3、wav、m4a、flac、aac、ogg、webm、amr、3gp格式，最大10MB</p>
+                            </div>
+                            <input type="file" id="audioFileInput" accept=".mp3,.wav,.m4a,.flac,.aac,.ogg,.webm,.amr,.3gp,audio/*" style="display: none;">
+                        </div>
+                        <div class="file-info" id="audioFileInfo" style="display: none;">
+                            <div class="file-details">
+                                <span class="file-name" id="audioFileName"></span>
+                                <span class="file-size" id="audioFileSize"></span>
+                            </div>
+                            <button type="button" class="file-remove-btn" id="audioFileRemoveBtn">✕</button>
+                        </div>
+                    </div>
+
+                    <details class="settings-panel" open>
+                        <summary>STT 服务设置</summary>
+                        <div class="controls-grid">
+                            <div class="form-group"><label class="form-label" for="sttProvider">服务商</label><select class="form-select" id="sttProvider"><option value="siliconflow">硅基流动</option><option value="openai-compatible">任意 OpenAI 兼容服务</option></select></div>
+                            <div class="form-group"><label class="form-label" for="sttModel">模型</label><input class="form-input" id="sttModel" value="FunAudioLLM/SenseVoiceSmall" placeholder="whisper-1 / 模型 ID"></div>
+                            <div class="form-group stt-custom-field" style="display:none"><label class="form-label" for="sttBaseUrl">兼容服务 Base URL</label><input class="form-input" id="sttBaseUrl" placeholder="https://api.example.com/v1"></div>
+                            <div class="form-group"><label class="form-label" for="tokenInput">API Key（仅本次请求使用）</label><input type="password" class="form-input" id="tokenInput" placeholder="可选：部署者配置默认密钥时可留空"></div>
+                        </div>
+                        <p class="settings-help">兼容服务将接收标准 multipart 字段：file、model、language、prompt、response_format。</p>
+                    </details>
+
+                    <button type="submit" class="btn-primary" id="transcribeBtn">
+                        <span>🎧</span>
+                        <span>开始语音转录</span>
+                    </button>
+                </form>
+
+                <div id="transcriptionResult" class="result-container">
+                    <div id="transcriptionLoading" class="loading-container" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p class="loading-text" id="transcriptionLoadingText">正在转录音频，请稍候...</p>
+                        <div class="progress-info" id="transcriptionProgressInfo" style="margin-top: 12px; font-size: 0.875rem; color: var(--text-secondary);"></div>
+                    </div>
+                    
+                    <div id="transcriptionSuccess" style="display: none;">
+                        <div class="transcription-result">
+                            <label class="form-label">转录结果</label>
+                            <textarea class="form-textarea" id="transcriptionText" 
+                                      placeholder="转录结果将在这里显示..." readonly></textarea>
+                            <div class="result-actions">
+                                <button type="button" class="btn-secondary" id="copyTranscriptionBtn">
+                                    <span>📋</span>
+                                    <span>复制文本</span>
+                                </button>
+                                <button type="button" class="btn-secondary" id="editTranscriptionBtn">
+                                    <span>✏️</span>
+                                    <span>编辑文本</span>
+                                </button>
+                                <button type="button" class="btn-secondary" id="useForTtsBtn">
+                                    <span>🎙️</span>
+                                    <span>转为语音</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="transcriptionError" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="/app.client.js"></script>
+</body>
+</html>
