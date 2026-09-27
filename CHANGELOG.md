@@ -4,6 +4,14 @@
 
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## [v2.2.0] - 2026-09-27
+
+### ✨ 新功能与体验增强 (Features & Enhancements)
+- **极速流式播放 (Audio Streaming) 支持**：
+  - 后端：优化短文本透传并重写长文本合并逻辑，改用 `TransformStream` 串行发起请求，实现“边生成边下发”，不再阻塞等待全量合成结束。
+  - 前端：摒弃原本的全量 Blob 等待，引入 `MediaSource Extensions (MSE)` 对接收到的流数据一边下载一边解码追加，首字响应延迟（TTFB）质变提升，实现类似自然对话的流畅体验。
+  - 兼容性：智能识别设备对 MSE 及编码的支持情况，在不支持的旧设备（如 iOS 微信/部分旧版 Safari）中平滑回退至原版全量下载模式，兼顾极速与兼容。
+
 ## [v2.1.0] - 2026-09-27
 
 ### ✨ 新功能与体验增强 (Features & Enhancements)

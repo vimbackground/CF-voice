@@ -124,7 +124,7 @@ async function getAudioChunk(text, voiceName, rate, pitch, volume, style, output
                     throw new Error(`Edge TTS API错误: ${response.status} ${errorText}`);
                 }
             }
-            return await response.blob();
+            return response;
         } catch (error) {
             if (attempt === maxRetries) throw new Error(`音频生成失败（已重试${maxRetries}次）: ${error.message}`);
             if (error.message.includes('fetch') || error.message.includes('network')) {
@@ -137,29 +137,6 @@ async function getAudioChunk(text, voiceName, rate, pitch, volume, style, output
     }
 }
 
-async function processBatchedAudioChunks(chunks, voiceName, rate, pitch, volume, style, outputFormat, batchSize = 3, delayMs = 800) {
-    const audioChunks = [];
-    for (let i = 0; i < chunks.length; i += batchSize) {
-        const batch = chunks.slice(i, i + batchSize);
-        console.log(`正在处理批次 ${Math.floor(i/batchSize) + 1}/${Math.ceil(chunks.length/batchSize)}`);
-        
-        const batchPromises = batch.map(chunk => 
-            getAudioChunk(chunk, voiceName, rate, pitch, volume, style, outputFormat)
-        );
-        try {
-            const batchResults = await Promise.all(batchPromises);
-            audioChunks.push(...batchResults);
-            if (i + batchSize < chunks.length) {
-                await delay(delayMs);
-            }
-        } catch (error) {
-            console.error(`批次处理失败:`, error);
-            throw error;
-        }
-    }
-    return audioChunks;
-}
-
 export async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = '+0%', pitch = '+0Hz', volume = '+0%', style = "general", outputFormat = "audio-24khz-48kbitrate-mono-mp3") {
     try {
         const cleanText = text.trim();
@@ -169,8 +146,8 @@ export async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = 
         }
         
         if (cleanText.length <= 1500) {
-            const audioBlob = await getAudioChunk(cleanText, voiceName, rate, pitch, volume, style, outputFormat);
-            return new Response(audioBlob, {
+            const response = await getAudioChunk(cleanText, voiceName, rate, pitch, volume, style, outputFormat);
+            return new Response(response.body, {
                 headers: {
                     "Content-Type": contentTypeFor(outputFormat),
                     ...makeCORSHeaders()
@@ -184,10 +161,38 @@ export async function getVoice(text, voiceName = "zh-CN-XiaoxiaoNeural", rate = 
         }
         
         console.log(`文本已分为 ${chunks.length} 个块进行处理`);
-        const audioChunks = await processBatchedAudioChunks(chunks, voiceName, rate, pitch, volume, style, outputFormat, 3, 800);
-        const concatenatedAudio = new Blob(audioChunks, { type: 'audio/mpeg' });
         
-        return new Response(concatenatedAudio, {
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        
+        (async () => {
+            try {
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunk = chunks[i];
+                    console.log(`正在流式处理批次 ${i + 1}/${chunks.length}`);
+                    const res = await getAudioChunk(chunk, voiceName, rate, pitch, volume, style, outputFormat);
+                    
+                    if (res.body) {
+                        const reader = res.body.getReader();
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            await writer.write(value);
+                        }
+                    }
+                    
+                    if (i < chunks.length - 1) {
+                        await delay(800);
+                    }
+                }
+                await writer.close();
+            } catch (err) {
+                console.error("流式合成出错", err);
+                await writer.abort(err);
+            }
+        })();
+        
+        return new Response(readable, {
             headers: {
                 "Content-Type": contentTypeFor(outputFormat),
                 ...makeCORSHeaders()

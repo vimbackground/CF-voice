@@ -512,18 +512,85 @@ let selectedFile = null;
                     throw new Error(errorData.error?.message || '生成失败');
                 }
                 
-                const audioBlob = await response.blob();
-                const audioUrl = URL.createObjectURL(audioBlob);
-                
-                // 显示音频播放器
                 const audioPlayer = document.getElementById('audioPlayer');
                 const downloadBtn = document.getElementById('downloadBtn');
                 
-                audioPlayer.src = audioUrl;
-                downloadBtn.href = audioUrl;
+                let contentType = response.headers.get('Content-Type') || 'audio/mpeg';
+                let isFallback = true;
+                if (window.MediaSource && MediaSource.isTypeSupported(contentType)) {
+                    isFallback = false;
+                }
                 
-                loading.style.display = 'none';
-                success.style.display = 'block';
+                if (isFallback) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioUrl;
+                    downloadBtn.href = audioUrl;
+                    
+                    loading.style.display = 'none';
+                    success.style.display = 'block';
+                } else {
+                    loading.style.display = 'none';
+                    success.style.display = 'block';
+                    
+                    const mediaSource = new MediaSource();
+                    const audioUrl = URL.createObjectURL(mediaSource);
+                    audioPlayer.src = audioUrl;
+                    
+                    const reader = response.body.getReader();
+                    const downloadedChunks = [];
+                    
+                    mediaSource.addEventListener('sourceopen', async () => {
+                        const sourceBuffer = mediaSource.addSourceBuffer(contentType);
+                        let isAppending = false;
+                        let appendQueue = [];
+                        
+                        sourceBuffer.addEventListener('updateend', () => {
+                            isAppending = false;
+                            processAppendQueue();
+                        });
+                        
+                        function processAppendQueue() {
+                            if (!isAppending && appendQueue.length > 0 && !sourceBuffer.updating) {
+                                isAppending = true;
+                                sourceBuffer.appendBuffer(appendQueue.shift());
+                            }
+                        }
+                        
+                        try {
+                            while (true) {
+                                const { done, value } = await reader.read();
+                                if (done) {
+                                    const checkEnd = setInterval(() => {
+                                        if (!sourceBuffer.updating && appendQueue.length === 0) {
+                                            if (mediaSource.readyState === 'open') {
+                                                mediaSource.endOfStream();
+                                            }
+                                            clearInterval(checkEnd);
+                                        }
+                                    }, 50);
+                                    
+                                    const finalBlob = new Blob(downloadedChunks, { type: contentType });
+                                    downloadBtn.href = URL.createObjectURL(finalBlob);
+                                    break;
+                                }
+                                
+                                downloadedChunks.push(value);
+                                appendQueue.push(value);
+                                processAppendQueue();
+                                
+                                if (audioPlayer.paused && downloadedChunks.length === 1) {
+                                    audioPlayer.play().catch(e => console.log('Autoplay prevented:', e));
+                                }
+                            }
+                        } catch (e) {
+                            console.error('流式读取或播放错误:', e);
+                            if (mediaSource.readyState === 'open') {
+                                mediaSource.endOfStream('network');
+                            }
+                        }
+                    });
+                }
                 
             } catch (err) {
                 loading.style.display = 'none';
