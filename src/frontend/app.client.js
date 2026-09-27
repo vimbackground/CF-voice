@@ -1000,12 +1000,17 @@ let selectedFile = null;
 (function() {
     let abChunks = [];
     let abCurrentIndex = 0;
-    let abAudio = new Audio();
+    
+    // Ping-Pong buffering for gapless playback
+    let abAudio1 = new Audio();
+    let abAudio2 = new Audio();
+    let useAudio1 = true;
+    let activeAudio = abAudio1;
+    
     let isPlaying = false;
     let nextChunkLoaded = false;
     let preloadedBlobUrl = null;
     let currentSettingsKey = '';
-    
     // UI Elements - Setup Area
     const setupArea = document.getElementById('abSetupArea');
     const playerArea = document.getElementById('abPlayerArea');
@@ -1189,22 +1194,27 @@ let selectedFile = null;
             .replace(/---|===/g, ''); // hr
     }
 
-    // Split text into chunks for TTS (avoid too long sentences)
+    // Split text into chunks for TTS (smart grouping to improve natural prosody)
     function splitTextToChunks(text) {
         const raw = stripMarkdown(text);
-        const sentences = raw.split(/([。！？\n]+)/); // Split keeping delimiters
+        const tokens = raw.split(/([。！？\n]+)/); // Split keeping delimiters
         const chunks = [];
-        let temp = '';
-        for (let i = 0; i < sentences.length; i++) {
-            const part = sentences[i];
-            if (part.match(/^[。！？\n]+$/)) {
-                temp += part;
-            } else {
-                if (temp) chunks.push(temp);
-                temp = part;
+        let current = '';
+        
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+            current += token;
+            
+            // If the token is a delimiter, we check if we should push the chunk.
+            // Push if the accumulated string is long enough, OR if there's a newline (paragraph end).
+            if (token.match(/^[。！？\n]+$/)) {
+                if (token.includes('\n') || current.length >= 150) {
+                    chunks.push(current);
+                    current = '';
+                }
             }
         }
-        if (temp) chunks.push(temp);
+        if (current) chunks.push(current);
         return chunks;
     }
 
@@ -1290,21 +1300,27 @@ let selectedFile = null;
         }
         
         try {
-            if(nextChunkLoaded && preloadedBlobUrl && currentSettingsKey === settingsKey) {
-                abAudio.src = preloadedBlobUrl;
+            const standbyAudio = useAudio1 ? abAudio2 : abAudio1;
+            
+            if(nextChunkLoaded && currentSettingsKey === settingsKey && standbyAudio.src) {
+                // The standby audio already has the next chunk preloaded and decoded
+                activeAudio = standbyAudio;
+                useAudio1 = !useAudio1; // flip active role
             } else {
-                if(abAudio.src) URL.revokeObjectURL(abAudio.src);
+                activeAudio.pause();
+                activeAudio.removeAttribute('src');
+                activeAudio.load();
                 playPauseBtn.innerHTML = '<span class="ab-icon">⏳</span>缓冲';
                 const blobUrl = await fetchTTSBlob(chunk, voice, speed, pitch, style);
-                abAudio.src = blobUrl;
+                activeAudio.src = blobUrl;
                 currentSettingsKey = settingsKey;
             }
             
-            await abAudio.play();
+            await activeAudio.play();
             isPlaying = true;
             playPauseBtn.innerHTML = '<span class="ab-icon">⏸</span>暂停';
             
-            // Pre-fetch next
+            // Pre-fetch next into the new standby audio
             if (abCurrentIndex + 1 < abChunks.length) {
                 nextChunkLoaded = false;
                 let nextIndex = abCurrentIndex + 1;
@@ -1313,14 +1329,15 @@ let selectedFile = null;
                 }
                 if (nextIndex < abChunks.length) {
                     fetchTTSBlob(abChunks[nextIndex], voice, speed, pitch, style).then(url => {
-                        preloadedBlobUrl = url;
+                        const newStandby = useAudio1 ? abAudio2 : abAudio1;
+                        if(newStandby.src) URL.revokeObjectURL(newStandby.src);
+                        newStandby.src = url; // Preload so browser decodes it in background
                         currentSettingsKey = settingsKey;
                         nextChunkLoaded = true;
                     }).catch(e => console.error(e));
                 }
             } else {
                 nextChunkLoaded = false;
-                preloadedBlobUrl = null;
             }
         } catch(e) {
             console.error('播放失败:', e);
@@ -1330,25 +1347,37 @@ let selectedFile = null;
         }
     }
 
-    abAudio.onended = () => {
+    const onAudioEnded = () => {
         abCurrentIndex++;
         playCurrent();
     };
 
+    abAudio1.onended = onAudioEnded;
+    abAudio2.onended = onAudioEnded;
+
     function jumpTo(index) {
         abCurrentIndex = Math.max(0, Math.min(index, abChunks.length - 1));
         nextChunkLoaded = false;
-        abAudio.pause();
+        abAudio1.pause();
+        abAudio2.pause();
+        abAudio1.removeAttribute('src');
+        abAudio2.removeAttribute('src');
         playCurrent();
     }
 
     playPauseBtn.addEventListener('click', () => {
         if(isPlaying) {
-            abAudio.pause();
+            activeAudio.pause();
             isPlaying = false;
             playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
         } else {
-            playCurrent();
+            if(activeAudio.src && !activeAudio.ended) {
+                activeAudio.play();
+                isPlaying = true;
+                playPauseBtn.innerHTML = '<span class="ab-icon">⏸</span>暂停';
+            } else {
+                playCurrent();
+            }
         }
     });
 
@@ -1429,14 +1458,15 @@ let selectedFile = null;
     });
 
     function exitAudiobook() {
-        abAudio.pause();
+        abAudio1.pause();
+        abAudio2.pause();
         isPlaying = false;
         playPauseBtn.innerHTML = '<span class="ab-icon">▶</span>播放';
         nextChunkLoaded = false;
-        if (preloadedBlobUrl) {
-            URL.revokeObjectURL(preloadedBlobUrl);
-            preloadedBlobUrl = null;
-        }
+        if (abAudio1.src) URL.revokeObjectURL(abAudio1.src);
+        if (abAudio2.src) URL.revokeObjectURL(abAudio2.src);
+        abAudio1.removeAttribute('src');
+        abAudio2.removeAttribute('src');
         setupArea.style.display = 'block';
         playerArea.style.display = 'none';
     }
