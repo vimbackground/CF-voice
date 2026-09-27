@@ -113,7 +113,68 @@
         .voice-table th { color: var(--text-secondary); font-weight: 700; }
         .voice-table code { color: var(--primary-hover); font-size: .8rem; }
         .app-bar { max-width: 900px; margin: 0 auto 14px; padding: 0 4px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand-wrap { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .brand-mark { color: var(--primary-color); font-size: 1.2rem; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
+        .version-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 9999px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .version-badge:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .app-footer {
+            max-width: 900px;
+            margin: 28px auto 14px;
+            text-align: center;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .footer-sep {
+            color: var(--border-color);
+            user-select: none;
+        }
+        .app-footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .app-footer a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        .footer-version-link {
+            font-weight: 600;
+            color: var(--primary-color) !important;
+        }
+        .help-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .help-link:hover {
+            text-decoration: underline;
+        }
         
         .btn-primary {
             width: 100%;

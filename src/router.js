@@ -2,6 +2,7 @@ import { handleLogin, hasValidPageSession, hasValidApiKey } from './api/auth.js'
 import { handleFileUpload, getVoice, normalizeOpenAiVoice, outputFormatFor } from './api/tts.js';
 import { handleAudioTranscription } from './api/stt.js';
 import { makeCORSHeaders, jsonError } from './utils/http.js';
+import { APP_VERSION } from './config.js';
 import HTML_PAGE from './frontend/index.html';
 import LOGIN_PAGE from './frontend/login.html';
 import APP_CSS from './frontend/app.css';
@@ -29,6 +30,19 @@ export async function handleRequest(request, env = {}) {
         return new Response(APP_JS, { headers: { "Content-Type": "application/javascript; charset=utf-8", "Cache-Control": "max-age=86400" } });
     }
 
+    if (path === "/v1/version") {
+        return new Response(JSON.stringify({
+            name: "cf-voice",
+            version: APP_VERSION,
+            releases_url: "https://github.com/vimbackground/CF-voice/releases"
+        }), {
+            headers: {
+                "Content-Type": "application/json",
+                ...makeCORSHeaders()
+            }
+        });
+    }
+
     if (path === '/auth/login') {
         return handleLogin(request, env);
     }
@@ -44,7 +58,8 @@ export async function handleRequest(request, env = {}) {
                 headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } 
             });
         }
-        return new Response(HTML_PAGE, {
+        const renderedHtml = HTML_PAGE.replaceAll('{{APP_VERSION}}', APP_VERSION);
+        return new Response(renderedHtml, {
             headers: {
                 "Content-Type": "text/html; charset=utf-8",
                 ...makeCORSHeaders()
