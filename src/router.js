@@ -34,7 +34,7 @@ export async function handleRequest(request, env = {}) {
         return new Response(JSON.stringify({
             name: "cf-voice",
             version: APP_VERSION,
-            releases_url: "https://github.com/vimbackground/CF-voice/releases"
+            changelog_url: "https://github.com/vimbackground/CF-voice/blob/master/CHANGELOG.md"
         }), {
             headers: {
                 "Content-Type": "application/json",
